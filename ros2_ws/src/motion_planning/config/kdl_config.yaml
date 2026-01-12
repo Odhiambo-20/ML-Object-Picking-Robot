@@ -1,0 +1,821 @@
+# ml-object-picking-robot/ros2_ws/src/motion_planning/config/kdl_config.yaml
+# KDL (Kinematics and Dynamics Library) Configuration for Industrial Robotic Arm
+# Production-grade configuration for precise inverse kinematics solving
+
+# ============================================
+# KDL SOLVER GLOBAL CONFIGURATION
+# ============================================
+kdl_solver:
+  version: "1.5.0"
+  library: "orocos_kdl"
+  solver_type: "chain_ik_solver_pos_lma"  # Levenberg-Marquardt for robustness
+  precision: "double"  # Use double precision for industrial accuracy
+  use_gravity_compensation: true
+  enable_dynamics: false  # Kinematics only for real-time control
+  
+  # Solver performance settings
+  performance:
+    max_cache_size: 1000
+    enable_caching: true
+    cache_ttl: 3600  # seconds
+    warmup_iterations: 100
+    benchmark_mode: false
+
+# ============================================
+# ROBOT KINEMATIC CHAIN DEFINITION
+# ============================================
+robot_chain:
+  # Base to end-effector chain specification
+  name: "ur10e_industrial_arm"
+  root_link: "base_link"
+  tip_link: "tool0"  # UR convention for tool center point
+  flange_link: "wrist_3_link"  # Actual robot flange
+  
+  # Chain segments (UR10e 6-DOF specification)
+  segments:
+    - name: "base_to_shoulder"
+      joint:
+        name: "shoulder_pan_joint"
+        type: "revolute"
+        axis: [0.0, 0.0, 1.0]  # Z-axis rotation
+        origin:
+          position: [0.0, 0.0, 0.1273]  # meters from base
+          rotation: [0.0, 0.0, 0.0]     # radians
+        
+    - name: "shoulder_to_upper_arm"
+      joint:
+        name: "shoulder_lift_joint"
+        type: "revolute"
+        axis: [0.0, 1.0, 0.0]  # Y-axis rotation
+        origin:
+          position: [0.0, 0.220, 0.0]
+          rotation: [-1.5708, 0.0, 0.0]  # -90 degrees
+        
+    - name: "upper_arm_to_forearm"
+      joint:
+        name: "elbow_joint"
+        type: "revolute"
+        axis: [0.0, 1.0, 0.0]  # Y-axis rotation
+        origin:
+          position: [0.612, 0.0, 0.0]
+          rotation: [0.0, 0.0, 0.0]
+        
+    - name: "forearm_to_wrist1"
+      joint:
+        name: "wrist_1_joint"
+        type: "revolute"
+        axis: [0.0, 0.0, 1.0]  # Z-axis rotation
+        origin:
+          position: [0.5723, 0.0, 0.0]
+          rotation: [1.5708, 0.0, 0.0]  # 90 degrees
+        
+    - name: "wrist1_to_wrist2"
+      joint:
+        name: "wrist_2_joint"
+        type: "revolute"
+        axis: [0.0, 1.0, 0.0]  # Y-axis rotation
+        origin:
+          position: [0.0, 0.0, 0.0]
+          rotation: [-1.5708, 0.0, 0.0]  # -90 degrees
+        
+    - name: "wrist2_to_wrist3"
+      joint:
+        name: "wrist_3_joint"
+        type: "revolute"
+        axis: [0.0, 0.0, 1.0]  # Z-axis rotation
+        origin:
+          position: [0.0, 0.0, 0.0]
+          rotation: [0.0, 0.0, 0.0]
+        
+    - name: "wrist3_to_tool0"
+      joint:
+        name: "fixed_tool_adapter"
+        type: "fixed"
+        origin:
+          position: [0.0, 0.0, 0.0]  # Tool adapter offset
+          rotation: [0.0, 0.0, 0.0]
+
+  # DH Parameters (Denavit-Hartenberg) for validation
+  dh_parameters:
+    - joint: "shoulder_pan_joint"
+      d: 0.1273
+      a: 0.0
+      alpha: 1.570796327
+      theta_offset: 0.0
+      
+    - joint: "shoulder_lift_joint"
+      d: 0.0
+      a: -0.612
+      alpha: 0.0
+      theta_offset: 0.0
+      
+    - joint: "elbow_joint"
+      d: 0.0
+      a: -0.5723
+      alpha: 0.0
+      theta_offset: 0.0
+      
+    - joint: "wrist_1_joint"
+      d: 0.163941
+      a: 0.0
+      alpha: 1.570796327
+      theta_offset: 0.0
+      
+    - joint: "wrist_2_joint"
+      d: 0.1157
+      a: 0.0
+      alpha: -1.570796327
+      theta_offset: 0.0
+      
+    - joint: "wrist_3_joint"
+      d: 0.0922
+      a: 0.0
+      alpha: 0.0
+      theta_offset: 0.0
+
+# ============================================
+# INVERSE KINEMATICS SOLVER CONFIGURATION
+# ============================================
+inverse_kinematics:
+  # Primary solver: Levenberg-Marquardt (most robust for industrial use)
+  solver_lma:
+    enabled: true
+    priority: 1
+    max_iterations: 500
+    epsilon: 1e-10  # Convergence tolerance
+    eps_joints: 1e-15  # Joint space tolerance
+    lambda_initial: 0.01  # Initial damping factor
+    lambda_factor: 10.0   # Damping adjustment factor
+    check_joint_limits: true
+    check_self_collision: true
+    
+  # Secondary solver: Newton-Raphson (faster but less robust)
+  solver_nr:
+    enabled: true
+    priority: 2
+    max_iterations: 200
+    epsilon: 1e-6
+    check_joint_limits: true
+    use_jacobian_transpose: false
+    
+  # Tertiary solver: Weighted pseudoinverse (for velocity IK)
+  solver_wp:
+    enabled: true
+    priority: 3
+    lambda: 0.01  # Damping for singularities
+    max_iterations: 100
+    epsilon: 1e-5
+    
+  # Solver selection strategy
+  selection:
+    auto_select: true
+    fallback_order: ["lma", "nr", "wp"]
+    timeout_primary: 0.1  # seconds
+    timeout_secondary: 0.05
+    success_rate_threshold: 0.95  # Switch solver if below this
+    
+  # Multiple solution handling
+  multiple_solutions:
+    enabled: true
+    max_solutions: 8
+    solution_selection: "optimal"  # optimal, closest, safest
+    optimality_criteria:
+      - criterion: "manipulability"
+        weight: 0.3
+      - criterion: "joint_limit_margin"
+        weight: 0.3
+      - criterion: "distance_to_current"
+        weight: 0.2
+      - criterion: "energy_consumption"
+        weight: 0.2
+        
+  # Seed configuration
+  seed_strategy:
+    default: "current_position"
+    alternatives:
+      - strategy: "random"
+        probability: 0.1
+        bounds: "joint_limits"
+        
+      - strategy: "previous_solution"
+        memory: 10  # Remember last 10 solutions
+        
+      - strategy: "database"
+        enabled: true
+        db_path: "/etc/robot/ik_solutions.db"
+        max_entries: 10000
+        
+  # Jacobian configuration
+  jacobian:
+    computation: "analytical"  # analytical, numerical
+    numerical_epsilon: 1e-6
+    enable_transpose: true
+    enable_pseudoinverse: true
+    enable_damped_least_squares: true
+    damping_factor: 0.01
+    singularity_threshold: 1e-3
+    condition_number_warning: 1000
+    condition_number_error: 10000
+
+# ============================================
+# FORWARD KINEMATICS CONFIGURATION
+# ============================================
+forward_kinematics:
+  solver_fk:
+    type: "recursive"  # KDL's ChainFkSolverPos_recursive
+    max_recursion_depth: 10
+    cache_results: true
+    validation_enabled: true
+    
+  # Frame computation options
+  frames_to_compute:
+    - link: "shoulder_link"
+      enabled: true
+      
+    - link: "elbow_link"
+      enabled: true
+      
+    - link: "wrist_1_link"
+      enabled: true
+      
+    - link: "wrist_2_link"
+      enabled: true
+      
+    - link: "wrist_3_link"
+      enabled: true
+      
+    - link: "tool0"
+      enabled: true
+      
+    - link: "gripper_tip"
+      enabled: true
+      offset:
+        position: [0.0, 0.0, 0.15]  # 15cm from tool0
+        rotation: [0.0, 0.0, 0.0]
+        
+  # Performance optimization
+  optimization:
+    use_sympy: false
+    precompute_transforms: true
+    transform_cache_size: 1000
+
+# ============================================
+# JOINT LIMITS AND CONSTRAINTS
+# ============================================
+joint_limits:
+  # UR10e joint limits (from manufacturer specifications)
+  joints:
+    shoulder_pan_joint:
+      lower: -6.283185307  # -360 degrees
+      upper: 6.283185307   # 360 degrees
+      velocity: 2.094395102  # 120 deg/s
+      acceleration: 5.235987756  # 300 deg/s²
+      jerk: 52.35987756  # 3000 deg/s³
+      effort: 330.0  # Nm
+      soft_limit_lower: -6.108652381  # -350 degrees
+      soft_limit_upper: 6.108652381   # 350 degrees
+      soft_limit_margin: 0.174532925  # 10 degrees
+      
+    shoulder_lift_joint:
+      lower: -6.283185307  # -360 degrees
+      upper: 6.283185307   # 360 degrees
+      velocity: 2.094395102
+      acceleration: 5.235987756
+      jerk: 52.35987756
+      effort: 330.0
+      soft_limit_lower: -2.879793265  # -165 degrees (avoid singularity)
+      soft_limit_upper: 2.879793265   # 165 degrees
+      
+    elbow_joint:
+      lower: -3.141592654  # -180 degrees
+      upper: 3.141592654   # 180 degrees
+      velocity: 2.094395102
+      acceleration: 5.235987756
+      jerk: 52.35987756
+      effort: 150.0
+      soft_limit_lower: -2.967059728  # -170 degrees
+      soft_limit_upper: 2.967059728   # 170 degrees
+      
+    wrist_1_joint:
+      lower: -6.283185307  # -360 degrees
+      upper: 6.283185307   # 360 degrees
+      velocity: 3.141592654  # 180 deg/s
+      acceleration: 7.853981634  # 450 deg/s²
+      jerk: 78.53981634  # 4500 deg/s³
+      effort: 56.0
+      soft_limit_lower: -6.108652381  # -350 degrees
+      soft_limit_upper: 6.108652381   # 350 degrees
+      
+    wrist_2_joint:
+      lower: -6.283185307  # -360 degrees
+      upper: 6.283185307   # 360 degrees
+      velocity: 3.141592654
+      acceleration: 7.853981634
+      jerk: 78.53981634
+      effort: 56.0
+      soft_limit_lower: -6.108652381  # -350 degrees
+      soft_limit_upper: 6.108652381   # 350 degrees
+      
+    wrist_3_joint:
+      lower: -6.283185307  # -360 degrees
+      upper: 6.283185307   # 360 degrees
+      velocity: 3.141592654
+      acceleration: 7.853981634
+      jerk: 78.53981634
+      effort: 56.0
+      soft_limit_lower: -6.108652381  # -350 degrees
+      soft_limit_upper: 6.108652381   # 350 degrees
+      
+  # Constraint handling strategies
+  constraints:
+    enforce_hard_limits: true
+    enforce_soft_limits: true
+    enforce_velocity_limits: true
+    enforce_acceleration_limits: true
+    enforce_effort_limits: true
+    
+    violation_response:
+      hard_limit: "reject_and_warn"
+      soft_limit: "scale_and_warn"
+      velocity_limit: "scale_smoothly"
+      acceleration_limit: "scale_smoothly"
+      effort_limit: "reject_and_error"
+      
+    scaling_factors:
+      max_scale_down: 0.1  # Never go below 10% of command
+      velocity_reduction: 0.8  # Reduce to 80% when near limit
+      acceleration_reduction: 0.7
+      
+  # Singularity handling
+  singularity_regions:
+    # Shoulder singularity (arm fully extended)
+    shoulder_singularity:
+      joints: ["shoulder_lift_joint", "elbow_joint"]
+      condition: "abs(shoulder_lift_joint + elbow_joint) < 0.1745"  # < 10 degrees
+      response: "avoid_with_margin"
+      margin: 0.349066  # 20 degrees
+      
+    # Wrist singularity (wrist axes aligned)
+    wrist_singularity:
+      joints: ["wrist_1_joint", "wrist_3_joint"]
+      condition: "abs(wrist_1_joint - wrist_3_joint) < 0.1745"
+      response: "avoid_with_margin"
+      margin: 0.349066
+
+# ============================================
+# WORKSPACE CONSTRAINTS
+# ============================================
+workspace:
+  # UR10e workspace definition (spherical coordinates)
+  spherical:
+    radius_min: 0.5  # meters (inner safety radius)
+    radius_max: 1.3  # meters (maximum reach)
+    theta_min: -3.14159  # -180 degrees
+    theta_max: 3.14159   # 180 degrees
+    phi_min: -1.91986    # -110 degrees
+    phi_max: 1.91986     # 110 degrees
+    
+  # Cartesian workspace (rectangular bounds)
+  cartesian:
+    x_min: -1.2
+    x_max: 1.2
+    y_min: -1.2
+    y_max: 1.2
+    z_min: -0.1  # Slightly below base
+    z_max: 1.5
+    
+  # Safety zones
+  safety_zones:
+    - name: "base_protection"
+      type: "cylinder"
+      center: [0.0, 0.0, 0.0]
+      radius: 0.3
+      height: 0.5
+      priority: 100
+      response: "reject"
+      
+    - name: "cable_management"
+      type: "box"
+      min: [-0.2, -0.2, 0.8]
+      max: [0.2, 0.2, 1.2]
+      priority: 50
+      response: "warning"
+      
+    - name: "human_collaboration"
+      type: "sphere"
+      center: [0.8, 0.0, 1.0]
+      radius: 0.6
+      priority: 75
+      response: "reduce_speed"
+      
+  # Workspace validation
+  validation:
+    check_reachability: true
+    check_self_collision: true
+    check_environment_collision: true
+    collision_padding: 0.05  # 5cm safety margin
+    validation_timeout: 0.1  # seconds
+
+# ============================================
+# PERFORMANCE OPTIMIZATION
+# ============================================
+performance:
+  # Real-time performance targets
+  realtime:
+    max_computation_time: 0.005  # 5ms for real-time control
+    max_ik_time: 0.1  # 100ms for planning
+    control_frequency: 125  # Hz (8ms period)
+    planning_frequency: 10  # Hz
+    
+  # Caching strategies
+  caching:
+    ik_solutions:
+      enabled: true
+      max_entries: 10000
+      eviction_policy: "lru"
+      ttl: 3600  # seconds
+      
+    fk_transforms:
+      enabled: true
+      max_entries: 5000
+      
+    workspace_checks:
+      enabled: true
+      spatial_hash_resolution: 0.01  # 1cm grid
+      
+  # Parallel computation
+  parallel:
+    enabled: true
+    max_threads: 4
+    thread_affinity: [0, 1, 2, 3]
+    task_granularity: "fine"  # fine, medium, coarse
+    
+  # Numerical optimization
+  numerical:
+    use_fast_math: true
+    precision: "double"
+    epsilon_adaptive: true
+    min_epsilon: 1e-12
+    max_epsilon: 1e-6
+    
+  # Memory management
+  memory:
+    preallocate_buffers: true
+    buffer_size: 1000
+    alignment: 64  # bytes (cache line alignment)
+    use_pool_allocator: true
+
+# ============================================
+# ERROR HANDLING AND RECOVERY
+# ============================================
+error_handling:
+  # Error classification
+  errors:
+    - type: "convergence_failure"
+      level: "warning"
+      retry_attempts: 3
+      retry_strategy: "random_seed"
+      
+    - type: "singularity_detected"
+      level: "warning"
+      response: "damped_least_squares"
+      damping_factor: 0.1
+      
+    - type: "joint_limit_violation"
+      level: "error"
+      response: "reject_and_log"
+      
+    - type: "workspace_violation"
+      level: "error"
+      response: "reject_and_log"
+      
+    - type: "timeout"
+      level: "warning"
+      response: "fallback_solver"
+      
+    - type: "numerical_instability"
+      level: "error"
+      response: "increase_precision"
+      
+  # Recovery strategies
+  recovery:
+    max_recovery_attempts: 3
+    recovery_timeout: 0.5  # seconds
+    
+    strategies:
+      - name: "seed_perturbation"
+        enabled: true
+        max_perturbation: 0.174533  # 10 degrees
+        
+      - name: "goal_relaxation"
+        enabled: true
+        position_tolerance: 0.01  # 1cm
+        orientation_tolerance: 0.1  # ~5.7 degrees
+        
+      - name: "solver_switch"
+        enabled: true
+        order: ["lma", "nr", "wp"]
+        
+      - name: "subproblem_decomposition"
+        enabled: true
+        max_subproblems: 3
+        
+  # Fallback mechanisms
+  fallback:
+    enabled: true
+    mechanisms:
+      - name: "database_lookup"
+        enabled: true
+        db_path: "/etc/robot/ik_fallback.db"
+        
+      - name: "neural_network"
+        enabled: false  # Experimental
+        model_path: "/models/ik_nn.pt"
+        
+      - name: "gradient_descent"
+        enabled: true
+        learning_rate: 0.1
+        max_iterations: 1000
+
+# ============================================
+# MONITORING AND DIAGNOSTICS
+# ============================================
+monitoring:
+  # Performance metrics collection
+  metrics:
+    enabled: true
+    sampling_rate: 10  # Hz
+    publish_rate: 1    # Hz
+    
+    metrics_to_collect:
+      - "ik_solve_time"
+      - "fk_solve_time"
+      - "success_rate"
+      - "iterations_per_solve"
+      - "jacobian_condition_number"
+      - "manipulability_index"
+      - "joint_limit_proximity"
+      - "singularity_proximity"
+      - "cache_hit_rate"
+      - "error_rate"
+      
+  # Health checks
+  health:
+    enabled: true
+    check_interval: 5.0  # seconds
+    
+    checks:
+      - name: "solver_convergence"
+        threshold: 0.95  # 95% success rate
+        window: 100  # last 100 solves
+        
+      - name: "solve_time"
+        threshold: 0.1  # 100ms
+        percentile: 99
+        
+      - name: "numerical_stability"
+        threshold: 1e-6
+        check_jacobian: true
+        
+      - name: "memory_usage"
+        threshold_mb: 100
+        
+  # Diagnostics output
+  diagnostics:
+    enable_ros_diagnostics: true
+    diagnostic_topic: "/diagnostics/kdl_solver"
+    verbosity: "normal"  # normal, detailed, debug
+    
+    logging:
+      level: "INFO"
+      directory: "/var/log/kdl_solver/"
+      max_files: 10
+      rotation: "daily"
+      
+  # Visualization (for debugging)
+  visualization:
+    enable_marker_array: true
+    topic: "/visualization/kdl_solutions"
+    frame_id: "base_link"
+    
+    markers:
+      - type: "joint_positions"
+        enabled: true
+        scale: 0.05  # meters
+        
+      - type: "workspace_boundary"
+        enabled: true
+        color: [1.0, 0.0, 0.0, 0.1]  # RGBA
+        
+      - type: "singularity_regions"
+        enabled: true
+        color: [1.0, 1.0, 0.0, 0.2]
+
+# ============================================
+# CALIBRATION AND OFFSETS
+# ============================================
+calibration:
+  # Joint zero position calibration
+  joint_offsets:
+    shoulder_pan_joint: 0.0
+    shoulder_lift_joint: 0.0
+    elbow_joint: 0.0
+    wrist_1_joint: 0.0
+    wrist_2_joint: 0.0
+    wrist_3_joint: 0.0
+    
+  # Tool frame calibration (TCP - Tool Center Point)
+  tool_frames:
+    default_tool:
+      name: "default_gripper"
+      frame_id: "tool0"
+      transform:
+        position: [0.0, 0.0, 0.15]  # 15cm offset
+        rotation: [0.0, 0.0, 0.0]   # Identity rotation
+      mass: 1.0  # kg
+      com: [0.0, 0.0, 0.075]  # center of mass
+      inertia: [0.001, 0.001, 0.001]  # placeholder
+        
+    custom_tool_1:
+      name: "vacuum_gripper"
+      frame_id: "tool0"
+      transform:
+        position: [0.0, 0.0, 0.25]
+        rotation: [0.0, 0.0, 0.0]
+      mass: 2.5
+      com: [0.0, 0.0, 0.125]
+      inertia: [0.005, 0.005, 0.005]
+        
+  # Base frame calibration
+  base_frame:
+    transform:
+      position: [0.0, 0.0, 0.0]
+      rotation: [0.0, 0.0, 0.0]
+    fixed_to_world: true
+    
+  # Calibration procedure
+  procedure:
+    auto_calibration: false
+    manual_calibration_points: 6
+    validation_method: "circle_point_analysis"
+    tolerance:
+      position: 0.001  # 1mm
+      orientation: 0.01  # ~0.57 degrees
+
+# ============================================
+# DYNAMICS CONFIGURATION (Optional)
+# ============================================
+dynamics:
+  enabled: false  # Disabled by default for performance
+  
+  # Inertia parameters (UR10e from datasheet)
+  links:
+    base_link:
+      mass: 15.0  # kg
+      com: [0.0, 0.0, 0.075]
+      inertia: [0.1, 0.1, 0.1]
+      
+    shoulder_link:
+      mass: 7.0
+      com: [0.0, -0.11, 0.0]
+      inertia: [0.05, 0.05, 0.05]
+      
+    upper_arm_link:
+      mass: 5.0
+      com: [0.306, 0.0, 0.0]
+      inertia: [0.03, 0.03, 0.03]
+      
+    forearm_link:
+      mass: 3.0
+      com: [0.28615, 0.0, 0.0]
+      inertia: [0.02, 0.02, 0.02]
+      
+    wrist_1_link:
+      mass: 1.5
+      com: [0.0, 0.0, 0.082]
+      inertia: [0.01, 0.01, 0.01]
+      
+    wrist_2_link:
+      mass: 1.5
+      com: [0.0, 0.0, 0.058]
+      inertia: [0.01, 0.01, 0.01]
+      
+    wrist_3_link:
+      mass: 1.0
+      com: [0.0, 0.0, 0.046]
+      inertia: [0.005, 0.005, 0.005]
+      
+  # Gravity compensation
+  gravity_compensation:
+    enabled: true
+    gravity_vector: [0.0, 0.0, -9.81]  # m/s²
+    compensation_type: "static"  # static, dynamic
+    
+  # Friction model
+  friction:
+    viscous_friction: [0.1, 0.1, 0.1, 0.05, 0.05, 0.05]
+    coulomb_friction: [5.0, 5.0, 3.0, 1.0, 1.0, 1.0]  # Nm
+    stiction: [10.0, 10.0, 6.0, 2.0, 2.0, 2.0]
+
+# ============================================
+# EXPORT AND INTEGRATION SETTINGS
+# ============================================
+export:
+  # ROS2 integration
+  ros2:
+    node_name: "kdl_kinematics_solver"
+    namespace: "motion_planning"
+    
+    services:
+      solve_ik: "solve_ik"
+      solve_fk: "solve_fk"
+      validate_pose: "validate_pose"
+      get_workspace: "get_workspace"
+      
+    actions:
+      plan_trajectory: "plan_trajectory"
+      optimize_path: "optimize_path"
+      
+  # File export formats
+  formats:
+    urdf: true
+    srdf: true
+    yaml: true
+    json: true
+    
+  # Integration with other planners
+  integration:
+    moveit: true
+    trac_ik: false
+    ikfast: false
+    
+    moveit_config:
+      planning_groups:
+        - name: "manipulator"
+          joints: ["shoulder_pan_joint", "shoulder_lift_joint", "elbow_joint", 
+                   "wrist_1_joint", "wrist_2_joint", "wrist_3_joint"]
+          end_effector: "tool0"
+
+# ============================================
+# VALIDATION AND TESTING
+# ============================================
+validation:
+  # Self-test on startup
+  startup_tests:
+    enabled: true
+    tests:
+      - name: "chain_consistency"
+        tolerance: 1e-6
+        
+      - name: "joint_limit_consistency"
+        
+      - name: "solver_initialization"
+        iterations: 10
+        
+      - name: "workspace_boundary_check"
+        test_points: 100
+        
+  # Continuous validation
+  continuous:
+    enabled: true
+    rate: 1.0  # Hz
+    
+    checks:
+      - name: "ik_fk_consistency"
+        tolerance:
+          position: 0.001  # 1mm
+          orientation: 0.01  # ~0.57 degrees
+          
+      - name: "jacobian_consistency"
+        numerical_epsilon: 1e-6
+        
+      - name: "solution_uniqueness"
+        tolerance: 0.01
+        
+  # Test scenarios
+  test_scenarios:
+    enabled: true
+    
+    scenarios:
+      - name: "home_position"
+        pose:
+          position: [0.5, 0.0, 0.5]
+          orientation: [0.0, 0.0, 0.0, 1.0]
+          
+      - name: "reach_extremes"
+        poses:
+          - position: [1.0, 0.0, 0.5]
+          - position: [-1.0, 0.0, 0.5]
+          - position: [0.0, 1.0, 0.5]
+          - position: [0.0, -1.0, 0.5]
+          - position: [0.0, 0.0, 1.2]
+          - position: [0.0, 0.0, 0.2]
+          
+      - name: "singularity_test"
+        poses:
+          - position: [0.8, 0.0, 0.3]  # Near shoulder singularity
+          - position: [0.5, 0.5, 0.5]  # General position
+
+# ============================================
+# END OF KDL CONFIGURATION
+# ============================================

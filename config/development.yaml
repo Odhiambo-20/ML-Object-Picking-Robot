@@ -1,0 +1,577 @@
+# ml-object-picking-robot/config/development.yaml
+# Development configuration for ML-Based Object Picking Robot
+# This configuration is optimized for development and testing environments
+
+# ============================================
+# SYSTEM-WIDE CONFIGURATION
+# ============================================
+system:
+  name: "ml-object-picking-robot-dev"
+  version: "1.0.0"
+  environment: "development"
+  debug_mode: true
+  log_level: "DEBUG"
+  
+  # Resource limits for development
+  resource_limits:
+    cpu_percentage: 80  # Max CPU usage
+    memory_mb: 4096     # Max memory in MB
+    gpu_memory_mb: 2048 # GPU memory limit
+    
+  # Development features
+  features:
+    enable_hot_reload: true
+    enable_debug_endpoints: true
+    enable_profiling: true
+    skip_hardware_check: true  # Allow simulation without hardware
+    
+  # Timeouts (in seconds)
+  timeouts:
+    startup: 30
+    shutdown: 10
+    service_call: 5
+    motion_planning: 15
+    detection: 2
+
+# ============================================
+# ROS2 CONFIGURATION
+# ============================================
+ros2:
+  distribution: "humble"
+  domain_id: 42  # Development domain ID
+  
+  # QoS settings for development
+  qos:
+    sensor_data:
+      reliability: "best_effort"
+      durability: "volatile"
+      depth: 10
+    commands:
+      reliability: "reliable"
+      durability: "transient_local"
+      depth: 100
+    status:
+      reliability: "reliable"
+      durability: "volatile"
+      depth: 50
+      
+  # Node configurations
+  nodes:
+    publish_rate: 30.0  # Hz
+    executor_threads: 4
+    spin_timeout: 1000  # ms
+    
+  # Topics (development-specific)
+  topics:
+    camera: "/dev/camera/image_raw"
+    detections: "/dev/perception/detections"
+    visualization: "/dev/perception/visualization"
+    joint_states: "/dev/joint_states"
+    trajectory: "/dev/motion/trajectory"
+    status: "/dev/system/status"
+    
+  # Services
+  services:
+    pick_object: "/dev/task/pick_object"
+    place_object: "/dev/task/place_object"
+    emergency_stop: "/dev/safety/emergency_stop"
+    calibrate: "/dev/system/calibrate"
+    
+  # Actions
+  actions:
+    pick_place: "/dev/task/pick_place"
+    navigate: "/dev/motion/navigate"
+
+# ============================================
+# PERCEPTION SYSTEM CONFIGURATION
+# ============================================
+perception:
+  # ML Model selection for development
+  model:
+    name: "yolov5n"  # Use nano model for faster development
+    path: "/ros2_ws/src/perception_stack/models/yolov5n.pt"
+    input_size: 320   # Smaller for faster processing
+    confidence_threshold: 0.3  # Lower for more detections during dev
+    iou_threshold: 0.4
+    max_detections: 50
+    
+  # Camera configuration
+  camera:
+    source: "simulation"  # Options: simulation, webcam, realsense, file
+    simulation_source: "/simulation/worlds/test_scene.png"
+    resolution:
+      width: 640
+      height: 480
+    fps: 15  # Lower FPS for development
+    calibration_file: "/ros2_ws/src/perception_stack/config/camera_calibration_dev.yaml"
+    
+  # Object detection settings
+  detection:
+    enabled_classes: [0, 1, 2, 3, 39, 40, 41, 56, 73]  # Common industrial objects
+    min_detection_size: 20  # pixels
+    max_detection_size: 500 # pixels
+    tracking_enabled: true
+    tracker_type: "iou"  # Simple IOU tracker for development
+    
+  # Performance optimization
+  optimization:
+    use_gpu: true
+    half_precision: false  # Disable for development stability
+    batch_size: 1
+    enable_caching: true
+    cache_size: 100
+    
+  # Debug visualization
+  visualization:
+    enabled: true
+    show_bbox: true
+    show_labels: true
+    show_confidences: true
+    show_tracking_ids: true
+    show_fps: true
+    output_window: "detection_debug"
+    save_detections: true
+    save_path: "/tmp/detections"
+
+# ============================================
+# MOTION PLANNING CONFIGURATION
+# ============================================
+motion_planning:
+  # Robot parameters (development robot - simplified)
+  robot:
+    dof: 6
+    joint_names: ["joint1", "joint2", "joint3", "joint4", "joint5", "joint6"]
+    home_position: [0.0, -1.57, 1.57, 0.0, 0.0, 0.0]  # radians
+    velocity_limits: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]  # rad/s
+    acceleration_limits: [2.0, 2.0, 2.0, 2.0, 2.0, 2.0]  # rad/s²
+    
+  # IK Solver configuration
+  ik_solver:
+    type: "kdl"  # Options: kdl, trac_ik, ikfast
+    method: "lma"  # Levenberg-Marquardt for stability
+    max_iterations: 100
+    tolerance: 0.001
+    timeout: 0.1  # seconds
+    
+  # Motion planner settings
+  planner:
+    type: "rrt_connect"  # Fast planning for development
+    planning_time: 2.0  # seconds
+    goal_tolerance: 0.01  # meters/radians
+    collision_checking: true
+    simplify_path: true
+    
+  # Trajectory generation
+  trajectory:
+    time_scaling: "trapezoidal"
+    max_velocity_scale: 0.5  # Slower for safety
+    max_acceleration_scale: 0.3
+    discretization: 0.01  # seconds
+    
+  # Simulation mode
+  simulation:
+    enabled: true
+    use_gazebo: true
+    gazebo_world: "/simulation/worlds/development.world"
+    physics_engine: "ode"
+    realtime_factor: 1.0
+
+# ============================================
+# CONTROL SYSTEM CONFIGURATION
+# ============================================
+control:
+  # Hardware interface (development mode uses simulation)
+  hardware:
+    mode: "simulation"  # Options: simulation, dummy, actual
+    servo_controller: "simulated"
+    motor_driver: "simulated"
+    gripper_type: "simulated"
+    
+  # Servo control parameters
+  servo:
+    frequency: 50  # Hz
+    min_pulse: 500  # microseconds
+    max_pulse: 2500
+    calibration_enabled: false  # Skip calibration in dev
+    safety_timeout: 5.0  # seconds
+    
+  # Motor control
+  motor:
+    max_speed: 0.5  # m/s
+    acceleration: 0.2  # m/s²
+    deceleration: 0.3  # m/s²
+    
+  # Gripper control
+  gripper:
+    type: "parallel"
+    max_opening: 0.1  # meters
+    min_opening: 0.0
+    grasp_force: 20.0  # Newtons
+    speed: 0.05  # m/s
+    
+  # PID controllers (simplified for development)
+  pid:
+    joint_position:
+      kp: 100.0
+      ki: 0.1
+      kd: 10.0
+    joint_velocity:
+      kp: 10.0
+      ki: 0.01
+      kd: 1.0
+
+# ============================================
+# TASK PLANNING CONFIGURATION
+# ============================================
+task_planning:
+  # Task sequences for development
+  sequences:
+    pick_and_place:
+      - action: "move_to_home"
+      - action: "detect_objects"
+      - action: "select_target"
+      - action: "plan_pick_trajectory"
+      - action: "execute_pick"
+      - action: "plan_place_trajectory"
+      - action: "execute_place"
+      - action: "return_to_home"
+      
+  # Object database (development samples)
+  objects:
+    cube:
+      type: "cuboid"
+      dimensions: [0.05, 0.05, 0.05]  # meters
+      weight: 0.1  # kg
+      grasp_type: "top_grasp"
+      
+    cylinder:
+      type: "cylinder"
+      dimensions: [0.03, 0.1]  # radius, height
+      weight: 0.2
+      grasp_type: "side_grasp"
+      
+    sphere:
+      type: "sphere"
+      dimensions: [0.04]  # radius
+      weight: 0.15
+      grasp_type: "encompassing_grasp"
+      
+  # Task parameters
+  parameters:
+    max_pick_attempts: 3
+    pick_timeout: 30.0  # seconds
+    place_timeout: 30.0
+    verification_enabled: true
+    retry_on_failure: true
+
+# ============================================
+# SAFETY CONFIGURATION
+# ============================================
+safety:
+  # Emergency systems
+  emergency:
+    stop_enabled: true
+    stop_timeout: 0.5  # seconds
+    auto_recovery: true
+    recovery_delay: 2.0
+    
+  # Collision avoidance
+  collision:
+    enabled: true
+    safety_distance: 0.1  # meters
+    warning_distance: 0.2
+    stop_distance: 0.05
+    
+  # Joint limits
+  joints:
+    soft_limits_enabled: true
+    soft_limit_threshold: 0.95  # Percentage of hard limit
+    velocity_limit_threshold: 0.8
+    torque_limit_threshold: 0.7
+    
+  # Monitoring
+  monitoring:
+    heartbeat_interval: 1.0  # seconds
+    timeout_threshold: 3.0
+    enable_telemetry: true
+    log_violations: true
+
+# ============================================
+# SIMULATION CONFIGURATION
+# ============================================
+simulation:
+  # Gazebo settings
+  gazebo:
+    enabled: true
+    gui: true
+    physics_update_rate: 1000  # Hz
+    realtime_update_rate: 100  # Hz
+    max_step_size: 0.001
+    
+  # Robot model
+  robot_model:
+    urdf_file: "/ros2_ws/src/robot_description/urdf/robot_dev.urdf.xacro"
+    sdf_file: "/simulation/models/robot/model.sdf"
+    initial_pose:
+      position: [0.0, 0.0, 0.5]
+      orientation: [0.0, 0.0, 0.0, 1.0]
+      
+  # Environment
+  environment:
+    world_file: "/simulation/worlds/development.world"
+    gravity: [0.0, 0.0, -9.81]
+    lighting: "full"
+    shadows: true
+    
+  # Objects in simulation
+  objects:
+    count: 5
+    types: ["cube", "cylinder", "sphere"]
+    spawn_area: [[-0.3, -0.3, 0.0], [0.3, 0.3, 0.1]]
+    randomize: true
+
+# ============================================
+# ML TRAINING CONFIGURATION (Development)
+# ============================================
+ml_training:
+  # Dataset configuration
+  dataset:
+    source: "coco"  # Options: coco, custom, synthetic
+    coco_path: "/ml_training/datasets/coco"
+    custom_path: "/ml_training/datasets/custom"
+    train_split: 0.8
+    val_split: 0.15
+    test_split: 0.05
+    
+  # Training parameters
+  training:
+    model: "yolov5s"
+    epochs: 50  # Fewer epochs for quick iterations
+    batch_size: 8  # Smaller for memory constraints
+    img_size: 416
+    workers: 4
+    device: "cuda:0"
+    
+  # Data augmentation (development - simplified)
+  augmentation:
+    enabled: true
+    hsv_h: 0.015
+    hsv_s: 0.7
+    hsv_v: 0.4
+    degrees: 10.0
+    translate: 0.1
+    scale: 0.5
+    shear: 2.0
+    perspective: 0.0
+    
+  # Validation and testing
+  validation:
+    interval: 5  # epochs
+    save_best_only: true
+    early_stopping_patience: 10
+    metrics: ["precision", "recall", "mAP@0.5", "mAP@0.5:0.95"]
+    
+  # ROC curve evaluation
+  roc:
+    enabled: true
+    thresholds: 50
+    classes_to_evaluate: [0, 1, 2, 3, 39, 56]  # Specific classes for dev
+    save_plots: true
+    plot_format: "png"
+
+# ============================================
+# MONITORING & LOGGING
+# ============================================
+monitoring:
+  # Logging configuration
+  logging:
+    level: "DEBUG"
+    directory: "/tmp/robot_logs"
+    max_files: 10
+    max_file_size: "10MB"
+    rotation: "daily"
+    format: "[%(asctime)s] [%(levelname)s] [%(name)s] %(message)s"
+    
+  # Performance monitoring
+  performance:
+    enabled: true
+    metrics:
+      - "cpu_usage"
+      - "memory_usage"
+      - "gpu_usage"
+      - "inference_time"
+      - "planning_time"
+      - "cycle_time"
+    sampling_rate: 1.0  # Hz
+    retention_period: 3600  # seconds
+    
+  # Health checks
+  health:
+    enabled: true
+    check_interval: 5.0  # seconds
+    components:
+      - "perception"
+      - "planning"
+      - "control"
+      - "communication"
+    failure_threshold: 3
+    
+  # Visualization
+  visualization:
+    enable_rqt: true
+    rqt_plugins:
+      - "rqt_graph"
+      - "rqt_console"
+      - "rqt_plot"
+      - "rqt_image_view"
+    web_interface: true
+    web_port: 8080
+
+# ============================================
+# DEVELOPMENT TOOLS
+# ============================================
+development:
+  # Debug tools
+  debug:
+    enable_breakpoints: true
+    enable_profiling: true
+    enable_memory_check: true
+    enable_rosbag: true
+    rosbag_topics: ["/dev/#"]  # Record all dev topics
+    
+  # Testing
+  testing:
+    unit_test_coverage: 80.0  # Minimum coverage percentage
+    integration_test_timeout: 60  # seconds
+    performance_test_duration: 300  # seconds
+    stress_test_enabled: true
+    
+  # CI/CD integration
+  ci_cd:
+    auto_build: true
+    auto_test: true
+    notification_channel: "slack"
+    deployment_target: "development"
+    
+  # Documentation
+  documentation:
+    auto_generate: true
+    include_docstrings: true
+    api_docs_enabled: true
+    user_manual_path: "/docs/user_manual_dev.md"
+
+# ============================================
+# NETWORK & COMMUNICATION
+# ============================================
+network:
+  # ROS2 network settings
+  ros:
+    multicast_enabled: true
+    unicast_enabled: true
+    interface: "eth0"
+    port: 11311
+    
+  # External services
+  services:
+    database:
+      host: "localhost"
+      port: 5432
+      database: "robot_dev"
+      username: "developer"
+      password: "dev123"
+      
+    api:
+      enabled: true
+      host: "0.0.0.0"
+      port: 5000
+      cors_enabled: true
+      rate_limit: 100  # requests per minute
+      
+  # File sharing
+  file_sharing:
+    nfs_enabled: true
+    nfs_path: "/shared/development"
+    samba_enabled: false
+
+# ============================================
+# DEPLOYMENT SETTINGS (Development)
+# ============================================
+deployment:
+  # Container orchestration
+  containers:
+    orchestrator: "docker-compose"
+    compose_file: "docker/docker-compose.dev.yml"
+    build_cache: true
+    auto_restart: true
+    
+  # Service discovery
+  service_discovery:
+    enabled: true
+    type: "ros2"  # Options: ros2, consul, etcd
+    health_check_interval: 10
+    
+  # Resource allocation
+  resources:
+    cpu_shares: 512
+    memory_limit: "4g"
+    gpu_allocation: "all"
+    storage_limit: "20g"
+    
+  # Update strategy
+  updates:
+    strategy: "rolling"
+    max_unavailable: 1
+    max_surge: 1
+    health_check_timeout: 30
+
+# ============================================
+# DATABASE CONFIGURATION
+# ============================================
+database:
+  # Main application database
+  main:
+    type: "postgresql"
+    host: "localhost"
+    port: 5432
+    name: "robot_development"
+    username: "robot_dev"
+    password: "dev_password"
+    pool_size: 10
+    timeout: 30
+    
+  # Time series data (for metrics)
+  timeseries:
+    type: "influxdb"
+    host: "localhost"
+    port: 8086
+    database: "robot_metrics"
+    retention_policy: "30d"
+    
+  # Object storage (for images, models)
+  storage:
+    type: "minio"
+    endpoint: "localhost:9000"
+    access_key: "dev_access_key"
+    secret_key: "dev_secret_key"
+    bucket: "robot-data-dev"
+    secure: false
+
+# ============================================
+# BACKUP & RECOVERY
+# ============================================
+backup:
+  enabled: true
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  retention_days: 7
+  components:
+    - "database"
+    - "models"
+    - "configurations"
+    - "logs"
+  storage:
+    local_path: "/backups/development"
+    remote_enabled: false
+    
+# ============================================
+# END OF CONFIGURATION
+# ============================================

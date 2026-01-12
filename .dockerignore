@@ -1,0 +1,419 @@
+# ============================================================================
+# .dockerignore - Docker Build Exclusions
+# ML-Based Object Picking Robot Project
+# ============================================================================
+# 
+# This file excludes unnecessary files from Docker build context to:
+# - Reduce image size
+# - Speed up build times
+# - Prevent sensitive data leakage
+# - Avoid build artifacts pollution
+# 
+# Author: Victor's Production Team
+# Date: 2025-01-12
+# Version: 1.0.0
+# 
+# ============================================================================
+
+# ============================================================================
+# VERSION CONTROL
+# ============================================================================
+.git
+.gitignore
+.gitattributes
+.github
+
+# ============================================================================
+# DOCUMENTATION
+# ============================================================================
+*.md
+README*
+CHANGELOG*
+LICENSE*
+CONTRIBUTING*
+docs/
+*.pdf
+*.docx
+*.pptx
+
+# ============================================================================
+# IDE & EDITOR FILES
+# ============================================================================
+# VS Code
+.vscode/
+*.code-workspace
+
+# PyCharm / IntelliJ
+.idea/
+*.iml
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+.*.sw?
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# ============================================================================
+# OPERATING SYSTEM FILES
+# ============================================================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+.directory
+.Trash-*
+
+# ============================================================================
+# ROS2 BUILD ARTIFACTS
+# ============================================================================
+ros2_ws/build/
+ros2_ws/install/
+ros2_ws/log/
+**/build/
+**/install/
+**/log/
+
+# Colcon artifacts
+.colcon/
+*.colcon_ignore
+
+# ============================================================================
+# PYTHON
+# ============================================================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.pytest_cache/
+.hypothesis/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# pyenv
+.python-version
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# Pipenv
+Pipfile.lock
+
+# Poetry
+poetry.lock
+
+# ============================================================================
+# C/C++
+# ============================================================================
+# Compiled Object files
+*.o
+*.obj
+*.ko
+*.elf
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+CTestTestfile.cmake
+_deps/
+
+# ============================================================================
+# MACHINE LEARNING
+# ============================================================================
+# Large model files (should be downloaded separately)
+*.h5
+*.hdf5
+*.pb
+*.pth
+*.pt
+*.onnx
+*.tflite
+*.caffemodel
+
+# Training artifacts
+checkpoints/
+runs/
+logs/
+tensorboard/
+wandb/
+
+# Datasets (too large for Docker context)
+datasets/
+data/
+*.csv
+*.json
+*.xml
+*.yaml
+!**/config/*.yaml
+
+# Weights
+weights/
+*.weights
+
+# ============================================================================
+# DOCKER
+# ============================================================================
+.dockerignore
+Dockerfile*
+docker-compose*.yml
+.docker/
+
+# ============================================================================
+# CI/CD
+# ============================================================================
+.circleci/
+.travis.yml
+.gitlab-ci.yml
+azure-pipelines.yml
+Jenkinsfile
+.drone.yml
+
+# ============================================================================
+# TESTING
+# ============================================================================
+test_results/
+coverage/
+*.test
+*.spec
+
+# ============================================================================
+# TEMPORARY FILES
+# ============================================================================
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+*.orig
+
+# ============================================================================
+# LOGS
+# ============================================================================
+*.log
+logs/
+log/
+*.log.*
+
+# ============================================================================
+# SECURITY & SECRETS
+# ============================================================================
+.env
+.env.*
+secrets/
+*.key
+*.pem
+*.crt
+*.p12
+credentials.json
+service-account.json
+
+# ============================================================================
+# DATABASE
+# ============================================================================
+*.db
+*.sqlite
+*.sqlite3
+
+# ============================================================================
+# MEDIA FILES (if not needed in container)
+# ============================================================================
+# Images
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tiff
+*.ico
+*.svg
+
+# Videos
+*.mp4
+*.avi
+*.mov
+*.wmv
+*.flv
+*.mkv
+
+# Audio
+*.mp3
+*.wav
+*.flac
+*.ogg
+
+# ============================================================================
+# ARCHIVES
+# ============================================================================
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+*.bz2
+*.xz
+
+# ============================================================================
+# NODE.JS (if applicable)
+# ============================================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# ============================================================================
+# SIMULATION & VISUALIZATION
+# ============================================================================
+# Gazebo
+.gazebo/
+
+# RViz
+*.rviz
+!**/config/*.rviz
+
+# ============================================================================
+# HARDWARE CALIBRATION (regenerate in container if needed)
+# ============================================================================
+# Exclude calibration data that might be hardware-specific
+# **/calibration/*.yaml
+# Uncomment above if calibration should be runtime-generated
+
+# ============================================================================
+# MISC
+# ============================================================================
+.cache/
+.local/
+*.pid
+*.seed
+*.pid.lock
+
+# ============================================================================
+# KEEP ESSENTIAL FILES
+# ============================================================================
+# Explicitly keep important configuration files
+!ros2_ws/src/**/config/*.yaml
+!ros2_ws/src/**/launch/*.py
+!ros2_ws/src/**/urdf/*.xacro
+!ros2_ws/src/**/CMakeLists.txt
+!ros2_ws/src/**/package.xml
+!ros2_ws/src/**/setup.py
+!ros2_ws/src/**/*.cpp
+!ros2_ws/src/**/*.hpp
+!ros2_ws/src/**/*.h
+!ros2_ws/src/**/*.py
+
+# ============================================================================
+# PROJECT-SPECIFIC EXCLUSIONS
+# ============================================================================
+# Exclude development notebooks
+ml_training/notebooks/*.ipynb
+
+# Exclude raw datasets (use pre-processed only)
+ml_training/datasets/raw/
+
+# Exclude simulation worlds (too large)
+simulation/worlds/*.world
+
+# Exclude test media
+test/test_images/
+test/test_videos/

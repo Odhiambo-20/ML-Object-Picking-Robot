@@ -1,0 +1,863 @@
+# ml-object-picking-robot/ros2_ws/src/motion_planning/config/motion_params.yaml
+# Motion Planning Parameters for Industrial Object Picking Robot
+# Comprehensive configuration for trajectory planning, execution, and optimization
+
+# ============================================
+# GLOBAL MOTION PLANNING CONFIGURATION
+# ============================================
+motion_planning:
+  version: "2.1.0"
+  mode: "production"  # production, staging, development
+  realtime_enabled: true
+  safety_certified: true
+  compliance_standard: "ISO 10218-1:2011"
+  
+  # System performance targets
+  performance_targets:
+    planning_success_rate: 0.99  # 99% success rate required
+    execution_success_rate: 0.995  # 99.5% execution success
+    max_planning_time: 2.0  # seconds
+    max_execution_time: 30.0  # seconds per task
+    control_frequency: 125  # Hz (8ms cycle)
+    planning_frequency: 10  # Hz
+    
+  # System behavior
+  behavior:
+    require_plan_validation: true
+    enable_replanning: true
+    max_replanning_attempts: 3
+    enable_smoothing: true
+    enable_optimization: true
+    enable_collision_checking: true
+    enable_torque_monitoring: true
+
+# ============================================
+# TRAJECTORY GENERATION PARAMETERS
+# ============================================
+trajectory_generation:
+  # Time parameterization methods
+  time_parameterization:
+    primary_method: "trapezoidal"  # trapezoidal, s_curve, cubic
+    fallback_method: "cubic"
+    
+    # Trapezoidal velocity profile (industrial standard)
+    trapezoidal:
+      max_velocity_scale: 0.8  # 80% of joint max velocity
+      max_acceleration_scale: 0.7  # 70% of joint max acceleration
+      max_deceleration_scale: 0.7
+      jerk_limit: 100.0  # rad/s³
+      blend_radius: 0.02  # meters for path blending
+      time_discretization: 0.002  # 2ms discretization
+      
+    # S-curve velocity profile (smoother motion)
+    s_curve:
+      max_jerk: 50.0  # rad/s³
+      jerk_time_ratio: 0.3  # 30% of time spent in jerk phase
+      enable_jerk_limiting: true
+      
+    # Cubic spline interpolation
+    cubic:
+      continuity: "C2"  # C0, C1, C2 continuity
+      boundary_conditions: "clamped"  # clamped, natural, periodic
+      
+  # Path interpolation
+  interpolation:
+    method: "linear"  # linear, cubic, b_spline
+    resolution: 0.01  # meters between waypoints
+    angular_resolution: 0.0174533  # 1 degree in radians
+    max_interpolation_points: 1000
+    
+    # B-spline specific
+    b_spline:
+      degree: 3
+      knot_vector_type: "uniform"
+      enable_local_refinement: true
+      
+  # Waypoint generation
+  waypoints:
+    min_waypoints: 3
+    max_waypoints: 100
+    optimization_criteria:
+      - criterion: "path_length"
+        weight: 0.4
+      - criterion: "execution_time"
+        weight: 0.3
+      - criterion: "energy_consumption"
+        weight: 0.2
+      - criterion: "joint_smoothness"
+        weight: 0.1
+        
+    # Via-point generation for complex paths
+    via_points:
+      enabled: true
+      max_via_points: 5
+      generation_method: "adaptive"  # fixed, adaptive, obstacle_aware
+      clearance_distance: 0.1  # meters from obstacles
+
+# ============================================
+# MOTION PLANNER CONFIGURATION (OMPL)
+# ============================================
+motion_planner:
+  # OMPL planner configuration
+  ompl:
+    enabled: true
+    version: "1.5.0"
+    
+    # Planning algorithms
+    planning_algorithms:
+      primary: "RRTstar"
+      fallbacks: ["RRTConnect", "PRMstar", "EST"]
+      
+      # RRT* (Optimal Rapidly-exploring Random Trees)
+      rrtstar:
+        goal_bias: 0.05
+        range: 0.1  # meters
+        delay_collision_checking: true
+        rewire_factor: 1.1
+        focused_search: true
+        
+      # RRT-Connect
+      rrtconnect:
+        range: 0.1
+        goal_bias: 0.05
+        bidirectional: true
+        
+      # PRM* (Probabilistic Roadmap)
+      prmstar:
+        max_nearest_neighbors: 10
+        roadmap_vertices: 1000
+        connection_filter: "knn"
+        
+      # EST (Expansive Space Trees)
+      est:
+        goal_bias: 0.05
+        range: 0.1
+        biased_sampling: true
+        
+    # Sampling strategies
+    sampling:
+      strategy: "obstacle_based"  # uniform, gaussian, obstacle_based, medial_axis
+      adaptive_sampling: true
+      max_sampling_attempts: 1000
+      
+      # Obstacle-based sampling
+      obstacle_based:
+        clearance: 0.05  # meters from obstacles
+        max_clearance_samples: 100
+        
+      # Medial axis sampling
+      medial_axis:
+        resolution: 0.02
+        max_samples: 500
+        
+    # State space configuration
+    state_space:
+      type: "RealVectorStateSpace"
+      bounds:
+        joint_1: [-6.28319, 6.28319]  # shoulder_pan
+        joint_2: [-6.28319, 6.28319]  # shoulder_lift
+        joint_3: [-3.14159, 3.14159]  # elbow
+        joint_4: [-6.28319, 6.28319]  # wrist_1
+        joint_5: [-6.28319, 6.28319]  # wrist_2
+        joint_6: [-6.28319, 6.28319]  # wrist_3
+        
+      projection_evaluator: "joints"
+      
+    # Optimization objectives
+    optimization:
+      enabled: true
+      objectives:
+        - type: "path_length"
+          weight: 1.0
+        - type: "mechanical_work"
+          weight: 0.5
+        - type: "clearance"
+          weight: 0.3
+          
+      optimization_threshold: 0.1  # 10% improvement required
+      max_optimization_time: 1.0  # seconds
+      
+  # Planning parameters
+  planning:
+    planning_time: 5.0  # seconds
+    simplification_time: 1.0  # seconds
+    validation_resolution: 0.01  # meters
+    goal_tolerance:
+      position: 0.005  # 5mm
+      orientation: 0.0872665  # 5 degrees
+      
+    # Multi-threading
+    parallel_planning:
+      enabled: true
+      thread_count: 4
+      planning_attempts: 5
+      return_first_solution: false
+      
+  # Validation
+  validation:
+    state_validity_checking_resolution: 0.01
+    validate_solutions: true
+    validate_simplified_paths: true
+    collision_checking_resolution: 0.02
+
+# ============================================
+# COLLISION CHECKING CONFIGURATION
+# ============================================
+collision_checking:
+  # Collision library configuration
+  collision_library:
+    name: "FCL"  # FCL, Bullet, PQP
+    version: "0.7.0"
+    
+    # FCL specific settings
+    fcl:
+      collision_tolerance: 0.001  # meters
+      distance_tolerance: 0.0001
+      enable_ccd: true  # Continuous Collision Detection
+      ccd_resolution: 0.01
+      enable_signed_distance: true
+      
+      # Broadphase algorithms
+      broadphase:
+        type: "SaP"  # SaP, brute force, interval tree
+        enable_spatial_hashing: true
+        hash_table_resolution: 0.1
+        
+      # Narrowphase algorithms
+      narrowphase:
+        type: "GJK"  # GJK, EPA
+        max_iterations: 1000
+        tolerance: 1e-6
+        
+  # Robot self-collision checking
+  self_collision:
+    enabled: true
+    check_pairs:
+      - ["shoulder_link", "upper_arm_link"]
+      - ["upper_arm_link", "forearm_link"]
+      - ["forearm_link", "wrist_1_link"]
+      - ["wrist_1_link", "wrist_2_link"]
+      - ["wrist_2_link", "wrist_3_link"]
+      - ["base_link", "upper_arm_link"]
+      - ["base_link", "forearm_link"]
+      
+    ignored_pairs:
+      - ["shoulder_link", "forearm_link"]  # Usually not colliding
+      - ["upper_arm_link", "wrist_1_link"]
+      
+    padding: 0.02  # 2cm padding for self-collision
+    
+  # Environment collision checking
+  environment:
+    enabled: true
+    world_collision_objects:
+      - name: "worktable"
+        type: "box"
+        dimensions: [1.5, 1.0, 0.8]
+        pose:
+          position: [0.5, 0.0, 0.4]
+          orientation: [0.0, 0.0, 0.0, 1.0]
+        padding: 0.05
+        
+      - name: "safety_fence"
+        type: "cylinder"
+        dimensions: [1.0, 1.5]  # radius, height
+        pose:
+          position: [0.0, 0.0, 0.75]
+          orientation: [0.0, 0.0, 0.0, 1.0]
+        padding: 0.1
+        
+    dynamic_obstacles:
+      enabled: true
+      tracking_topic: "/perception/dynamic_obstacles"
+      prediction_horizon: 2.0  # seconds
+      update_frequency: 10  # Hz
+      
+  # Safety margins
+  safety_margins:
+    warning_distance: 0.2  # meters
+    stop_distance: 0.1  # meters
+    hard_stop_distance: 0.05  # meters
+    reduction_factor: 0.5  # Speed reduction when near obstacles
+    
+    # Zone-based safety
+    safety_zones:
+      - name: "high_risk"
+        distance: 0.05
+        response: "emergency_stop"
+        
+      - name: "medium_risk"
+        distance: 0.1
+        response: "stop_and_replan"
+        
+      - name: "low_risk"
+        distance: 0.2
+        response: "reduce_speed"
+        
+  # Performance optimization
+  performance:
+    caching_enabled: true
+    cache_size: 10000
+    spatial_hashing_resolution: 0.05
+    lazy_collision_checking: true
+    hierarchical_checking: true
+
+# ============================================
+# PATH OPTIMIZATION PARAMETERS
+# ============================================
+path_optimization:
+  # Optimization methods
+  methods:
+    shortcut:
+      enabled: true
+      max_iterations: 100
+      clearance_check_resolution: 0.01
+      max_shortcut_length: 0.5  # meters in joint space
+      
+    simplify:
+      enabled: true
+      max_simplification_time: 0.5
+      clearance_threshold: 0.02
+      min_waypoint_distance: 0.01
+      
+    smooth:
+      enabled: true
+      type: "chomp"  # chomp, trajectory, b_spline
+      smoothing_factor: 0.1
+      max_smoothing_iterations: 50
+      
+      # CHOMP (Covariant Hamiltonian Optimization for Motion Planning)
+      chomp:
+        learning_rate: 0.01
+        obstacle_cost_weight: 1.0
+        smoothness_cost_weight: 0.1
+        enable_animate_path: false
+        
+  # Optimization criteria
+  optimization_criteria:
+    primary: "path_length"
+    secondary: "execution_time"
+    tertiary: "energy_consumption"
+    
+    weights:
+      path_length: 0.4
+      execution_time: 0.3
+      energy: 0.2
+      smoothness: 0.1
+      
+  # Convergence criteria
+  convergence:
+    max_iterations: 100
+    tolerance: 1e-4
+    improvement_threshold: 0.01  # 1% improvement required
+    timeout: 2.0  # seconds
+    
+  # Post-processing
+  post_processing:
+    remove_redundant_waypoints: true
+    enforce_joint_limits: true
+    check_collisions_after_optimization: true
+    validate_final_path: true
+
+# ============================================
+# EXECUTION CONTROL PARAMETERS
+# ============================================
+execution_control:
+  # Controller types
+  controllers:
+    joint_trajectory_controller:
+      type: "position"  # position, velocity, torque
+      gains:
+        p: [200.0, 200.0, 200.0, 100.0, 100.0, 100.0]
+        i: [0.5, 0.5, 0.5, 0.2, 0.2, 0.2]
+        d: [20.0, 20.0, 20.0, 10.0, 10.0, 10.0]
+        i_clamp: [100.0, 100.0, 100.0, 50.0, 50.0, 50.0]
+        
+    cartesian_controller:
+      enabled: false  # Experimental
+      type: "resolved_rate"
+      gains:
+        position: [10.0, 10.0, 10.0]
+        orientation: [5.0, 5.0, 5.0]
+        
+  # Execution monitoring
+  monitoring:
+    enabled: true
+    sampling_rate: 100  # Hz
+    
+    metrics_to_monitor:
+      - "position_error"
+      - "velocity_error"
+      - "torque_usage"
+      - "tracking_error"
+      - "following_error"
+      - "joint_temperatures"
+      
+    thresholds:
+      max_position_error: 0.01  # 1cm
+      max_velocity_error: 0.1  # rad/s
+      max_torque_percentage: 80  # % of max torque
+      max_temperature: 70  # °C
+      
+  # Adaptive control
+  adaptive_control:
+    enabled: true
+    adaptation_method: "gain_scheduling"  # gain_scheduling, model_reference
+    
+    gain_scheduling:
+      zones:
+        - name: "high_precision"
+          position_tolerance: 0.001
+          gains_multiplier: 2.0
+          
+        - name: "normal"
+          position_tolerance: 0.01
+          gains_multiplier: 1.0
+          
+        - name: "high_speed"
+          position_tolerance: 0.05
+          gains_multiplier: 0.5
+          
+  # Feedforward compensation
+  feedforward:
+    gravity_compensation: true
+    friction_compensation: true
+    inertia_compensation: false  # Requires accurate dynamics model
+    
+    friction_model:
+      viscous: [0.1, 0.1, 0.1, 0.05, 0.05, 0.05]
+      coulomb: [5.0, 5.0, 3.0, 1.0, 1.0, 1.0]
+      stiction: [10.0, 10.0, 6.0, 2.0, 2.0, 2.0]
+      
+  # Execution safety
+  safety:
+    enable_limits_monitoring: true
+    enable_torque_limits: true
+    enable_velocity_limits: true
+    enable_position_limits: true
+    enable_collision_detection: true
+    
+    violation_responses:
+      torque_limit: "emergency_stop"
+      velocity_limit: "reduce_speed"
+      position_limit: "soft_stop"
+      collision_detected: "emergency_stop"
+      
+    recovery_procedures:
+      emergency_stop_recovery: "manual"
+      soft_stop_recovery: "automatic"
+      speed_reduction_recovery: "automatic"
+
+# ============================================
+# PICK AND PLACE SPECIFIC PARAMETERS
+# ============================================
+pick_place:
+  # Approach and retreat parameters
+  approach:
+    distance: 0.1  # meters
+    speed_scale: 0.5  # 50% of max speed
+    direction: "normal"  # normal, aligned, custom
+    clearance_check: true
+    
+  retreat:
+    distance: 0.15  # meters
+    speed_scale: 0.3  # 30% of max speed (carrying object)
+    direction: "reverse_approach"
+    obstacle_aware: true
+    
+  # Grasp parameters
+  grasp:
+    verification_enabled: true
+    verification_method: "force_torque"  # force_torque, position, vision
+    
+    force_torque_verification:
+      min_force: 5.0  # N
+      max_force: 100.0  # N
+      expected_force_range: [20.0, 60.0]  # N for typical objects
+      slip_detection_enabled: true
+      slip_threshold: 0.01  # m/s
+      
+    position_verification:
+      tolerance: 0.005  # 5mm
+      max_attempts: 3
+      
+  # Place parameters
+  place:
+    alignment_required: true
+    alignment_tolerance: 0.01  # 10mm
+    force_control: true
+    place_force: 10.0  # N
+    release_delay: 0.5  # seconds
+    
+  # Object-specific parameters
+  object_parameters:
+    default:
+      grasp_type: "top_grasp"
+      approach_angle: 0.0  # radians
+      grasp_width: 0.05  # meters
+      grasp_force: 30.0  # N
+      
+    # Object type presets
+    presets:
+      cube:
+        grasp_type: "encompassing_grasp"
+        approach_angle: 0.0
+        grasp_width: 0.08
+        grasp_force: 40.0
+        
+      cylinder:
+        grasp_type: "parallel_grasp"
+        approach_angle: 1.5708  # 90 degrees
+        grasp_width: 0.06
+        grasp_force: 35.0
+        
+      sphere:
+        grasp_type: "encompassing_grasp"
+        approach_angle: 0.0
+        grasp_width: 0.1
+        grasp_force: 25.0
+        
+  # Failure recovery
+  failure_recovery:
+    max_attempts: 3
+    recovery_strategies:
+      - strategy: "reapproach"
+        max_reapproaches: 2
+        
+      - strategy: "regrasp"
+        max_regrasps: 2
+        
+      - strategy: "alternative_grasp"
+        max_alternatives: 3
+        
+      - strategy: "human_intervention"
+        timeout: 30.0
+
+# ============================================
+# REAL-TIME PERFORMANCE PARAMETERS
+# ============================================
+realtime:
+  # Timing constraints
+  timing:
+    control_cycle: 0.008  # 8ms (125Hz)
+    planning_cycle: 0.1  # 100ms (10Hz)
+    max_jitter: 0.001  # 1ms
+    watchdog_timeout: 0.1  # 100ms
+    
+    # Real-time priorities (Linux)
+    priorities:
+      control_thread: 80  # SCHED_FIFO, high priority
+      planning_thread: 60  # SCHED_RR, medium priority
+      monitoring_thread: 40  # SCHED_OTHER, low priority
+      
+  # Memory management
+  memory:
+    preallocated_buffers: true
+    buffer_sizes:
+      trajectory_buffer: 1000  # waypoints
+      joint_state_buffer: 10000  # samples
+      collision_check_buffer: 1000
+      
+    alignment: 64  # Cache line alignment
+    lock_free_queues: true
+    
+  # CPU affinity
+  cpu_affinity:
+    enabled: true
+    cores:
+      control: [0, 1]
+      planning: [2, 3]
+      monitoring: [4]
+      system: [5, 6, 7]
+      
+  # Real-time safety
+  safety:
+    enable_watchdog: true
+    watchdog_action: "soft_stop"
+    enable_heartbeat: true
+    heartbeat_interval: 0.1  # seconds
+    heartbeat_timeout: 0.5  # seconds
+
+# ============================================
+# MONITORING AND DIAGNOSTICS
+# ============================================
+monitoring:
+  # Performance metrics
+  metrics:
+    collection_enabled: true
+    sampling_rates:
+      control: 125  # Hz
+      planning: 10  # Hz
+      system: 1  # Hz
+      
+    metrics_to_publish:
+      - "planning_time"
+      - "execution_time"
+      - "success_rate"
+      - "path_length"
+      - "clearance_min"
+      - "joint_utilization"
+      - "collision_checks"
+      - "cache_hit_rate"
+      
+    aggregation:
+      window_size: 60  # seconds
+      publish_interval: 5  # seconds
+      
+  # Health monitoring
+  health:
+    enabled: true
+    check_interval: 5.0  # seconds
+    
+    checks:
+      - component: "planner"
+        metric: "success_rate"
+        threshold: 0.95
+        window: 100
+        
+      - component: "controller"
+        metric: "tracking_error"
+        threshold: 0.01
+        window: 1000
+        
+      - component: "collision_checker"
+        metric: "check_time"
+        threshold: 0.01
+        window: 100
+        
+      - component: "system"
+        metric: "cpu_usage"
+        threshold: 80
+        window: 10
+        
+  # Diagnostics output
+  diagnostics:
+    enable_ros_diagnostics: true
+    diagnostic_updater_rate: 1.0  # Hz
+    verbosity_level: "normal"  # minimal, normal, detailed
+    
+    topics:
+      status: "/motion_planning/status"
+      diagnostics: "/diagnostics/motion_planning"
+      metrics: "/metrics/motion_planning"
+      
+  # Logging
+  logging:
+    level: "INFO"
+    directory: "/var/log/motion_planning/"
+    rotation:
+      max_size: "100MB"
+      max_files: 10
+      retention_days: 30
+      
+    events_to_log:
+      - "planning_started"
+      - "planning_completed"
+      - "execution_started"
+      - "execution_completed"
+      - "collision_detected"
+      - "limit_violation"
+      - "error_occurred"
+
+# ============================================
+# ERROR HANDLING AND RECOVERY
+# ============================================
+error_handling:
+  # Error classification
+  error_categories:
+    planning_errors:
+      - "no_solution_found"
+      - "timeout"
+      - "invalid_start"
+      - "invalid_goal"
+      - "collision_at_start"
+      - "collision_at_goal"
+      
+    execution_errors:
+      - "tracking_error"
+      - "torque_limit"
+      - "velocity_limit"
+      - "position_limit"
+      - "collision_detected"
+      - "communication_loss"
+      
+    system_errors:
+      - "memory_allocation"
+      - "thread_deadlock"
+      - "watchdog_timeout"
+      - "sensor_failure"
+      
+  # Recovery strategies
+  recovery_strategies:
+    planning_recovery:
+      - action: "increase_planning_time"
+        multiplier: 2.0
+        max_attempts: 2
+        
+      - action: "simplify_problem"
+        reduce_waypoints: true
+        increase_tolerance: true
+        
+      - action: "change_planner"
+        planner_sequence: ["RRTstar", "RRTConnect", "EST"]
+        
+      - action: "human_intervention"
+        timeout: 30.0
+        
+    execution_recovery:
+      - action: "pause_and_replan"
+        clearance_check: true
+        
+      - action: "retract_to_safe"
+        safe_position: "home"
+        
+      - action: "reduce_speed"
+        speed_factor: 0.5
+        max_attempts: 2
+        
+      - action: "emergency_stop"
+        condition: "safety_critical"
+        
+  # Fallback mechanisms
+  fallback:
+    simplified_planner:
+      enabled: true
+      max_planning_time: 0.5
+      use_straight_line: true
+      disable_collision_checking: false
+      
+    manual_mode:
+      enabled: true
+      activation_condition: "multiple_failures"
+      max_failures: 3
+      
+    safe_state:
+      default: "home_position"
+      transition_time: 5.0
+      collision_free: true
+
+# ============================================
+# CALIBRATION AND TUNING
+# ============================================
+calibration:
+  # Automatic tuning
+  auto_tuning:
+    enabled: false  # Experimental
+    tuning_method: "reinforcement_learning"
+    
+    parameters_to_tune:
+      - "planner_goal_bias"
+      - "planner_range"
+      - "controller_gains"
+      - "safety_margins"
+      
+    performance_metrics:
+      - "success_rate"
+      - "execution_time"
+      - "path_length"
+      - "energy_consumption"
+      
+  # Manual calibration procedures
+  procedures:
+    joint_calibration:
+      enabled: true
+      procedure: "six_point"
+      tolerance: 0.001  # 1mm
+      
+    workspace_calibration:
+      enabled: true
+      method: "sphere_fitting"
+      points: 100
+      tolerance: 0.005  # 5mm
+      
+    tool_calibration:
+      enabled: true
+      method: "TCP_calibration"
+      points: 4
+      tolerance: 0.002  # 2mm
+      
+  # Calibration validation
+  validation:
+    enabled: true
+    tests:
+      - name: "repeatability"
+        cycles: 10
+        tolerance: 0.002
+        
+      - name: "accuracy"
+        test_points: 20
+        tolerance: 0.005
+        
+      - name: "workspace_coverage"
+        resolution: 0.1
+        min_coverage: 0.95
+
+# ============================================
+# INTEGRATION PARAMETERS
+# ============================================
+integration:
+  # ROS2 interfaces
+  ros2:
+    node_name: "motion_planning_node"
+    namespace: "motion_planning"
+    
+    topics:
+      # Input topics
+      joint_states: "/joint_states"
+      target_pose: "/task/target_pose"
+      collision_map: "/perception/collision_map"
+      dynamic_obstacles: "/perception/dynamic_obstacles"
+      
+      # Output topics
+      trajectory: "/motion_planning/trajectory"
+      execution_feedback: "/motion_planning/feedback"
+      status: "/motion_planning/status"
+      visualization: "/visualization/motion_planning"
+      
+    services:
+      plan_trajectory: "/motion_planning/plan_trajectory"
+      execute_trajectory: "/motion_planning/execute_trajectory"
+      stop_execution: "/motion_planning/stop"
+      get_status: "/motion_planning/get_status"
+      
+    actions:
+      pick_place: "/motion_planning/pick_place"
+      move_to_pose: "/motion_planning/move_to_pose"
+      execute_path: "/motion_planning/execute_path"
+      
+  # External system integration
+  external:
+    perception_system:
+      coordinate_frame: "camera_color_optical_frame"
+      transform_timeout: 0.1
+      update_rate: 30  # Hz
+      
+    control_system:
+      interface: "ros_control"
+      controller_manager: "/controller_manager"
+      trajectory_action: "/follow_joint_trajectory"
+      
+    safety_system:
+      emergency_stop_topic: "/safety/emergency_stop"
+      safety_status_topic: "/safety/status"
+      enable_safety_monitoring: true
+      
+  # Database integration
+  database:
+    enabled: true
+    type: "postgresql"
+    connection_string: "${MOTION_DB_CONNECTION}"
+    
+    tables:
+      trajectories: "trajectory_logs"
+      performance: "performance_metrics"
+      errors: "error_logs"
+      
+    logging:
+      log_all_trajectories: false
+      log_failed_trajectories: true
+      log_performance_metrics: true
+
+# ============================================
+# END OF MOTION PARAMETERS CONFIGURATION
+# ============================================

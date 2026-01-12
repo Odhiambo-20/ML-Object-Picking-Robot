@@ -1,0 +1,816 @@
+# Motor Control Configuration
+# Production-grade motor parameters for industrial robotic systems
+# Version: 2.0.0
+# Last Updated: 2024-01-15
+
+# ============================================================================
+# SYSTEM IDENTIFICATION
+# ============================================================================
+
+system:
+  # Unique system identifier
+  id: "ml_object_picking_robot_v2"
+  
+  # System type (serial, parallel, cartesian, scara, delta, etc.)
+  type: "serial_manipulator"
+  
+  # Number of degrees of freedom
+  dof: 6
+  
+  # Manufacturer information
+  manufacturer: 
+    name: "Robotics Corporation"
+    model: "RC-6000"
+    serial_number: "${env:SERIAL_NUMBER:RC6000-001}"
+  
+  # Installation date and maintenance information
+  installation_date: "${env:INSTALLATION_DATE:2024-01-15}"
+  last_maintenance: "${env:LAST_MAINTENANCE:2024-01-15}"
+  maintenance_interval_hours: 1000
+
+# ============================================================================
+# MOTOR DRIVER CONFIGURATION (L298N/L298P)
+# ============================================================================
+
+motor_driver:
+  # Driver chip type
+  chip: "L298N"
+  
+  # Pin configuration (BCM numbering for Raspberry Pi)
+  pins:
+    # Motor A (Base/Shoulder)
+    motor_a:
+      enable: 12    # PWM pin for speed control
+      input_1: 13   # Direction control 1
+      input_2: 19   # Direction control 2
+      
+    # Motor B (Elbow)
+    motor_b:
+      enable: 18    # PWM pin for speed control
+      input_1: 15   # Direction control 1
+      input_2: 16   # Direction control 2
+      
+    # Motor C (Wrist)
+    motor_c:
+      enable: 32    # PWM pin for speed control
+      input_1: 33   # Direction control 1
+      input_2: 35   # Direction control 2
+      
+    # Motor D (Gripper)
+    motor_d:
+      enable: 36    # PWM pin for speed control
+      input_1: 37   # Direction control 1
+      input_2: 38   # Direction control 2
+      
+    # Motor E (Additional axis)
+    motor_e:
+      enable: 40    # PWM pin for speed control
+      input_1: 29   # Direction control 1
+      input_2: 31   # Direction control 2
+      
+    # Motor F (Additional axis)
+    motor_f:
+      enable: 22    # PWM pin for speed control
+      input_1: 11   # Direction control 1
+      input_2: 23   # Direction control 2
+  
+  # PWM configuration
+  pwm:
+    frequency: 10000        # 10kHz PWM frequency (Hz)
+    duty_cycle_range: [0, 100]  # Duty cycle range (%)
+    deadband: 5             # Deadband to prevent motor buzzing (%)
+    
+    # Advanced PWM settings
+    mode: "balanced"        # balanced, mark-space, serialized
+    resolution: 1024        # PWM resolution (10-bit)
+    
+  # Voltage configuration
+  voltage:
+    logic: 5.0              # Logic voltage (V)
+    motor: 12.0             # Motor voltage (V)
+    max_motor: 24.0         # Maximum motor voltage (V)
+    
+    # Protection thresholds
+    under_voltage: 10.0     # Under-voltage protection (V)
+    over_voltage: 26.0      # Over-voltage protection (V)
+    
+  # Current sensing (if available)
+  current_sensing:
+    enabled: false
+    shunt_resistance: 0.1   # Shunt resistance (Ω)
+    gain: 20                # Current sense amplifier gain
+    adc_channel: 0          # ADC channel for current sense
+    
+  # Thermal protection
+  thermal:
+    max_temperature: 85.0   # Maximum operating temperature (°C)
+    warning_temperature: 70.0  # Warning temperature (°C)
+    shutdown_temperature: 90.0 # Shutdown temperature (°C)
+    thermal_coefficient: 0.5   # Temperature coefficient
+
+# ============================================================================
+# JOINT-SPECIFIC MOTOR PARAMETERS
+# ============================================================================
+
+joints:
+  
+  # Joint 1: Base (Rotation)
+  joint_1:
+    name: "base_rotation"
+    type: "rotary"
+    motor_type: "DC_brushless"
+    
+    # Physical parameters
+    gear_ratio: 100.0       # Motor to joint gear ratio
+    max_torque: 25.0        # Maximum torque (Nm)
+    continuous_torque: 12.0 # Continuous torque (Nm)
+    
+    # Electrical parameters
+    rated_voltage: 24.0     # Rated voltage (V)
+    rated_current: 5.0      # Rated current (A)
+    stall_current: 20.0     # Stall current (A)
+    resistance: 0.8         # Winding resistance (Ω)
+    inductance: 0.002       # Winding inductance (H)
+    
+    # Thermal parameters
+    thermal_resistance: 2.5 # Thermal resistance (°C/W)
+    thermal_time_constant: 300  # Thermal time constant (s)
+    
+    # Encoder parameters (if equipped)
+    encoder:
+      type: "quadrature"
+      resolution: 4096      # Counts per revolution
+      index_pulse: true
+    
+  # Joint 2: Shoulder
+  joint_2:
+    name: "shoulder"
+    type: "rotary"
+    motor_type: "DC_brushless"
+    
+    # Physical parameters
+    gear_ratio: 80.0
+    max_torque: 30.0
+    continuous_torque: 15.0
+    
+    # Electrical parameters
+    rated_voltage: 24.0
+    rated_current: 6.0
+    stall_current: 25.0
+    resistance: 0.7
+    inductance: 0.0018
+    
+    # Thermal parameters
+    thermal_resistance: 2.2
+    thermal_time_constant: 280
+    
+    # Encoder parameters
+    encoder:
+      type: "quadrature"
+      resolution: 4096
+      index_pulse: true
+  
+  # Joint 3: Elbow
+  joint_3:
+    name: "elbow"
+    type: "rotary"
+    motor_type: "DC_brushless"
+    
+    # Physical parameters
+    gear_ratio: 60.0
+    max_torque: 20.0
+    continuous_torque: 10.0
+    
+    # Electrical parameters
+    rated_voltage: 24.0
+    rated_current: 4.0
+    stall_current: 18.0
+    resistance: 1.0
+    inductance: 0.0025
+    
+    # Thermal parameters
+    thermal_resistance: 3.0
+    thermal_time_constant: 350
+    
+    # Encoder parameters
+    encoder:
+      type: "quadrature"
+      resolution: 2048
+      index_pulse: true
+  
+  # Joint 4: Wrist Rotation
+  joint_4:
+    name: "wrist_rotation"
+    type: "rotary"
+    motor_type: "DC_brush"
+    
+    # Physical parameters
+    gear_ratio: 50.0
+    max_torque: 8.0
+    continuous_torque: 4.0
+    
+    # Electrical parameters
+    rated_voltage: 12.0
+    rated_current: 2.5
+    stall_current: 10.0
+    resistance: 1.5
+    inductance: 0.003
+    
+    # Thermal parameters
+    thermal_resistance: 4.0
+    thermal_time_constant: 400
+    
+    # Encoder parameters
+    encoder:
+      type: "quadrature"
+      resolution: 1024
+      index_pulse: false
+  
+  # Joint 5: Wrist Pitch
+  joint_5:
+    name: "wrist_pitch"
+    type: "rotary"
+    motor_type: "DC_brush"
+    
+    # Physical parameters
+    gear_ratio: 50.0
+    max_torque: 6.0
+    continuous_torque: 3.0
+    
+    # Electrical parameters
+    rated_voltage: 12.0
+    rated_current: 2.0
+    stall_current: 8.0
+    resistance: 2.0
+    inductance: 0.0035
+    
+    # Thermal parameters
+    thermal_resistance: 4.5
+    thermal_time_constant: 450
+    
+    # Encoder parameters
+    encoder:
+      type: "quadrature"
+      resolution: 1024
+      index_pulse: false
+  
+  # Joint 6: Gripper
+  joint_6:
+    name: "gripper"
+    type: "linear"
+    motor_type: "servo"
+    
+    # Physical parameters
+    gear_ratio: 1.0         # Direct drive for servo
+    max_force: 50.0         # Maximum gripping force (N)
+    continuous_force: 25.0  # Continuous gripping force (N)
+    stroke_length: 0.1      # Stroke length (m)
+    
+    # Electrical parameters
+    rated_voltage: 6.0
+    rated_current: 3.0
+    stall_current: 12.0
+    resistance: 3.0
+    
+    # Servo-specific parameters
+    servo:
+      pwm_range: [500, 2500]  # PWM pulse width range (μs)
+      neutral_position: 1500   # Neutral position (μs)
+      operating_frequency: 50  # Operating frequency (Hz)
+
+# ============================================================================
+# VELOCITY AND ACCELERATION LIMITS
+# ============================================================================
+
+velocity_limits:
+  # Maximum velocities (rad/s for rotary, m/s for linear)
+  max:
+    joint_1: 2.0    # Base: 2 rad/s ≈ 115°/s
+    joint_2: 1.5    # Shoulder: 1.5 rad/s ≈ 86°/s
+    joint_3: 2.0    # Elbow: 2 rad/s ≈ 115°/s
+    joint_4: 3.0    # Wrist rotation: 3 rad/s ≈ 172°/s
+    joint_5: 3.0    # Wrist pitch: 3 rad/s ≈ 172°/s
+    joint_6: 0.2    # Gripper: 0.2 m/s
+  
+  # Minimum velocities (rad/s for rotary, m/s for linear)
+  min:
+    joint_1: 0.01
+    joint_2: 0.01
+    joint_3: 0.01
+    joint_4: 0.01
+    joint_5: 0.01
+    joint_6: 0.001
+  
+  # Maximum velocities during homing (slower for precision)
+  homing:
+    joint_1: 0.5
+    joint_2: 0.3
+    joint_3: 0.5
+    joint_4: 1.0
+    joint_5: 1.0
+    joint_6: 0.05
+
+acceleration_limits:
+  # Maximum accelerations (rad/s² for rotary, m/s² for linear)
+  max:
+    joint_1: 5.0
+    joint_2: 3.0
+    joint_3: 5.0
+    joint_4: 10.0
+    joint_5: 10.0
+    joint_6: 2.0
+  
+  # Maximum decelerations (rad/s² for rotary, m/s² for linear)
+  max_deceleration:
+    joint_1: 8.0
+    joint_2: 5.0
+    joint_3: 8.0
+    joint_4: 15.0
+    joint_5: 15.0
+    joint_6: 3.0
+  
+  # Jerk limits (rad/s³ for rotary, m/s³ for linear)
+  jerk_limits:
+    joint_1: 50.0
+    joint_2: 30.0
+    joint_3: 50.0
+    joint_4: 100.0
+    joint_5: 100.0
+    joint_6: 20.0
+
+# ============================================================================
+# CONTROL PARAMETERS
+# ============================================================================
+
+control:
+  # Control mode (position, velocity, torque, hybrid)
+  mode: "position"
+  
+  # PID controller parameters for position control
+  position_control:
+    # Joint 1: Base
+    joint_1:
+      kp: 100.0    # Proportional gain
+      ki: 5.0      # Integral gain
+      kd: 10.0     # Derivative gain
+      i_max: 50.0  # Integral windup limit
+      output_limit: 100.0  # Output limit (%)
+      deadband: 0.001  # Deadband (rad)
+      
+    # Joint 2: Shoulder
+    joint_2:
+      kp: 120.0
+      ki: 6.0
+      kd: 12.0
+      i_max: 60.0
+      output_limit: 100.0
+      deadband: 0.001
+      
+    # Joint 3: Elbow
+    joint_3:
+      kp: 80.0
+      ki: 4.0
+      kd: 8.0
+      i_max: 40.0
+      output_limit: 100.0
+      deadband: 0.001
+      
+    # Joint 4: Wrist rotation
+    joint_4:
+      kp: 60.0
+      ki: 3.0
+      kd: 6.0
+      i_max: 30.0
+      output_limit: 100.0
+      deadband: 0.002
+      
+    # Joint 5: Wrist pitch
+    joint_5:
+      kp: 60.0
+      ki: 3.0
+      kd: 6.0
+      i_max: 30.0
+      output_limit: 100.0
+      deadband: 0.002
+      
+    # Joint 6: Gripper
+    joint_6:
+      kp: 200.0
+      ki: 10.0
+      kd: 20.0
+      i_max: 100.0
+      output_limit: 100.0
+      deadband: 0.0001
+  
+  # Velocity control parameters
+  velocity_control:
+    joint_1:
+      kp: 10.0
+      ki: 2.0
+      kd: 1.0
+      i_max: 20.0
+      
+    joint_2:
+      kp: 12.0
+      ki: 2.5
+      kd: 1.2
+      i_max: 25.0
+      
+    joint_3:
+      kp: 8.0
+      ki: 1.5
+      kd: 0.8
+      i_max: 15.0
+      
+    joint_4:
+      kp: 6.0
+      ki: 1.0
+      kd: 0.6
+      i_max: 12.0
+      
+    joint_5:
+      kp: 6.0
+      ki: 1.0
+      kd: 0.6
+      i_max: 12.0
+      
+    joint_6:
+      kp: 20.0
+      ki: 5.0
+      kd: 2.0
+      i_max: 40.0
+  
+  # Feedforward control
+  feedforward:
+    enabled: true
+    velocity_ff: 0.8    # Velocity feedforward gain
+    acceleration_ff: 0.3 # Acceleration feedforward gain
+    friction_compensation: 0.2  # Friction compensation gain
+  
+  # Advanced control features
+  advanced:
+    adaptive_control: true
+    disturbance_rejection: true
+    resonance_compensation: true
+    notch_filters:
+      enabled: true
+      frequencies: [50, 100, 150]  # Notch filter frequencies (Hz)
+
+# ============================================================================
+# SAFETY PARAMETERS
+# ============================================================================
+
+safety:
+  # Emergency stop configuration
+  emergency_stop:
+    timeout_ms: 100          # Emergency stop timeout
+    deceleration_rate: 0.8   # Emergency deceleration rate (0-1)
+    hold_position: true      # Hold position after emergency stop
+    
+  # Current limits (A)
+  current_limits:
+    warning: 0.8             # Warning threshold (fraction of max)
+    fault: 0.9              # Fault threshold (fraction of max)
+    shutdown: 1.0           # Shutdown threshold (fraction of max)
+    
+    # Per-joint current limits
+    joint_1: 4.0
+    joint_2: 5.0
+    joint_3: 3.5
+    joint_4: 2.0
+    joint_5: 1.8
+    joint_6: 2.5
+  
+  # Temperature limits (°C)
+  temperature_limits:
+    warning: 70.0
+    fault: 80.0
+    shutdown: 90.0
+  
+  # Position limits (rad for rotary, m for linear)
+  soft_limits:
+    # Joint 1: Base rotation limits (rad)
+    joint_1:
+      min: -3.14159  # -180°
+      max: 3.14159   # +180°
+      margin: 0.0873 # 5° margin
+    
+    # Joint 2: Shoulder limits (rad)
+    joint_2:
+      min: -1.5708   # -90°
+      max: 2.0944    # +120°
+      margin: 0.0873 # 5° margin
+    
+    # Joint 3: Elbow limits (rad)
+    joint_3:
+      min: -2.0944   # -120°
+      max: 2.0944    # +120°
+      margin: 0.0873 # 5° margin
+    
+    # Joint 4: Wrist rotation limits (rad)
+    joint_4:
+      min: -3.14159  # -180°
+      max: 3.14159   # +180°
+      margin: 0.1745 # 10° margin
+    
+    # Joint 5: Wrist pitch limits (rad)
+    joint_5:
+      min: -1.5708   # -90°
+      max: 1.5708    # +90°
+      margin: 0.1745 # 10° margin
+    
+    # Joint 6: Gripper limits (m)
+    joint_6:
+      min: 0.0       # Fully closed
+      max: 0.1       # Fully open (10cm)
+      margin: 0.001  # 1mm margin
+  
+  # Collision detection
+  collision_detection:
+    enabled: true
+    torque_threshold: 0.7    # Fraction of max torque
+    detection_window: 10     # Samples for detection
+    recovery_time: 1000      # Recovery time after collision (ms)
+  
+  # Redundancy and fault tolerance
+  redundancy:
+    watchdog_enabled: true
+    watchdog_timeout_ms: 1000
+    heartbeat_interval_ms: 100
+    fault_recovery_attempts: 3
+
+# ============================================================================
+# CALIBRATION PARAMETERS
+# ============================================================================
+
+calibration:
+  # Homing sequence parameters
+  homing:
+    method: "limit_switch"  # limit_switch, current_sense, encoder_index
+    direction: "negative"   # positive, negative
+    velocity: 0.1          # Homing velocity (rad/s or m/s)
+    acceleration: 0.5      # Homing acceleration (rad/s² or m/s²)
+    offset: 0.0           # Home offset
+    
+    # Limit switch configuration
+    limit_switches:
+      enabled: true
+      debounce_ms: 10
+      active_low: true
+    
+    # Current sensing homing
+    current_sensing:
+      threshold: 2.0      # Current threshold for stall detection (A)
+      timeout_ms: 5000    # Timeout for current sensing homing
+  
+  # Encoder calibration
+  encoder:
+    auto_calibration: true
+    calibration_samples: 1000
+    calibration_velocity: 0.5
+  
+  # Torque constant calibration
+  torque_constant:
+    auto_calibration: true
+    calibration_load: 0.5  # Fraction of max load for calibration
+    calibration_time: 10   # Calibration time (s)
+
+# ============================================================================
+# PERFORMANCE OPTIMIZATION
+# ============================================================================
+
+performance:
+  # Real-time performance
+  real_time:
+    control_frequency: 1000  # Control loop frequency (Hz)
+    update_frequency: 100    # Status update frequency (Hz)
+    watchdog_frequency: 10   # Watchdog check frequency (Hz)
+    
+  # Motion planning optimization
+  motion_planning:
+    lookahead_time: 0.2      # Lookahead time for feedforward (s)
+    prediction_horizon: 10   # Prediction horizon samples
+    smoothing_factor: 0.5    # Trajectory smoothing factor
+    
+  # Power management
+  power_management:
+    idle_power_reduction: true
+    sleep_timeout: 300       # Sleep timeout (s)
+    wakeup_time: 2.0         # Wakeup time (s)
+    
+  # Thermal management
+  thermal_management:
+    active_cooling: true
+    fan_control: true
+    temperature_hysteresis: 5.0  # Temperature hysteresis (°C)
+
+# ============================================================================
+# DIAGNOSTICS AND MONITORING
+# ============================================================================
+
+diagnostics:
+  # Logging configuration
+  logging:
+    enabled: true
+    level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+    path: "${env:LOG_PATH:/var/log/robot_control}"
+    max_size_mb: 100
+    max_files: 10
+    
+  # Metrics collection
+  metrics:
+    enabled: true
+    sampling_rate: 10  # Samples per second
+    metrics:
+      - "current"
+      - "velocity"
+      - "position_error"
+      - "temperature"
+      - "power_consumption"
+      
+  # Health monitoring
+  health:
+    check_interval: 60  # Health check interval (s)
+    warning_threshold: 0.8
+    critical_threshold: 0.9
+    
+  # Predictive maintenance
+  predictive_maintenance:
+    enabled: true
+    wear_indicators:
+      - "operating_hours"
+      - "start_stop_cycles"
+      - "overload_events"
+      - "temperature_exceedances"
+
+# ============================================================================
+# COMMUNICATION PARAMETERS
+# ============================================================================
+
+communication:
+  # ROS2 topics
+  ros2:
+    namespace: "robot_control"
+    
+    # Published topics
+    publish:
+      joint_states:
+        topic: "joint_states"
+        qos_depth: 10
+        qos_reliability: "reliable"
+        
+      motor_status:
+        topic: "motor_status"
+        qos_depth: 10
+        qos_reliability: "best_effort"
+        
+      diagnostics:
+        topic: "diagnostics"
+        qos_depth: 5
+        qos_reliability: "best_effort"
+    
+    # Subscribed topics
+    subscribe:
+      joint_commands:
+        topic: "joint_commands"
+        qos_depth: 10
+        qos_reliability: "reliable"
+        
+      emergency_stop:
+        topic: "emergency_stop"
+        qos_depth: 1
+        qos_reliability: "reliable"
+  
+  # Hardware communication
+  hardware:
+    protocol: "pwm_direct"  # pwm_direct, i2c, spi, can
+    bus_frequency: 400000   # I2C/SPI bus frequency (Hz)
+    timeout_ms: 1000        # Communication timeout
+    retry_attempts: 3       # Retry attempts on failure
+
+# ============================================================================
+# OPERATIONAL MODES
+# ============================================================================
+
+operational_modes:
+  # Production mode (maximum performance)
+  production:
+    velocity_scale: 1.0
+    acceleration_scale: 1.0
+    safety_margin: 0.9
+    power_limit: 0.95
+    
+  # Development mode (reduced speed for safety)
+  development:
+    velocity_scale: 0.5
+    acceleration_scale: 0.5
+    safety_margin: 0.8
+    power_limit: 0.8
+    
+  # Maintenance mode (minimum speed)
+  maintenance:
+    velocity_scale: 0.2
+    acceleration_scale: 0.2
+    safety_margin: 0.5
+    power_limit: 0.5
+    
+  # Calibration mode
+  calibration:
+    velocity_scale: 0.1
+    acceleration_scale: 0.1
+    safety_margin: 0.3
+    power_limit: 0.3
+
+# ============================================================================
+# ENVIRONMENT VARIABLES AND OVERRIDES
+# ============================================================================
+
+# Environment variable overrides (will be replaced at runtime)
+# Syntax: ${env:VAR_NAME:default_value}
+
+overrides:
+  # Motor voltage can be overridden for different power supplies
+  motor_voltage: "${env:MOTOR_VOLTAGE:12.0}"
+  
+  # Safety limits can be adjusted based on installation
+  safety_margin: "${env:SAFETY_MARGIN:0.9}"
+  
+  # Operational mode based on environment
+  operational_mode: "${env:OPERATIONAL_MODE:development}"
+  
+  # Logging level based on environment
+  log_level: "${env:LOG_LEVEL:INFO}"
+
+# ============================================================================
+# VALIDATION RULES
+# ============================================================================
+
+# These parameters are validated at startup
+validation:
+  required_parameters:
+    - "motor_driver.pins"
+    - "joints"
+    - "safety.soft_limits"
+    - "control.position_control"
+    
+  value_ranges:
+    - parameter: "velocity_limits.max.*"
+      min: 0.0
+      max: 10.0
+      
+    - parameter: "acceleration_limits.max.*"
+      min: 0.0
+      max: 50.0
+      
+    - parameter: "control.position_control.*.kp"
+      min: 0.0
+      max: 1000.0
+      
+    - parameter: "safety.current_limits.*"
+      min: 0.0
+      max: 20.0
+
+# ============================================================================
+# VERSION AND COMPATIBILITY
+# ============================================================================
+
+version:
+  config_version: "2.0.0"
+  compatible_firmware: [ "1.5.0", "2.0.0", "2.1.0" ]
+  last_modified: "2024-01-15T10:30:00Z"
+  checksum: "${env:CONFIG_CHECKSUM}"
+  
+  # Change log for this configuration
+  changelog:
+    - version: "2.0.0"
+      date: "2024-01-15"
+      changes:
+        - "Added comprehensive safety parameters"
+        - "Enhanced performance optimization settings"
+        - "Added predictive maintenance configuration"
+        - "Improved validation rules"
+        
+    - version: "1.5.0"
+      date: "2023-11-20"
+      changes:
+        - "Initial production configuration"
+        - "Basic motor control parameters"
+        - "Safety limits configuration"
+
+# ============================================================================
+# FOOTER - DO NOT MODIFY BELOW THIS LINE
+# ============================================================================
+
+# Configuration signature (auto-generated)
+signature:
+  generated_by: "robot_control_config_generator_v2.0"
+  timestamp: "${env:TIMESTAMP}"
+  hash: "${env:CONFIG_HASH}"
+  
+# Notes for maintainers
+notes: |
+  This configuration file defines all motor control parameters for the ML-based object picking robot.
+  All values are in SI units unless otherwise specified.
+  Changes to this file should be thoroughly tested in simulation before deployment.
+  Always maintain a backup of working configurations.
+  Environment variables can be used to override default values for different deployments.

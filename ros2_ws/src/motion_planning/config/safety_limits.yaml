@@ -1,0 +1,796 @@
+# ml-object-picking-robot/ros2_ws/src/motion_planning/config/safety_limits.yaml
+# Safety Limits Configuration for Industrial Robotic Arm
+# ISO 10218-1:2011, ISO 13849-1:2015, ANSI/RIA R15.06 compliant
+
+# ============================================
+# SAFETY SYSTEM OVERVIEW
+# ============================================
+safety_system:
+  version: "3.0.0"
+  certification_level: "PLd"  # Performance Level d (ISO 13849)
+  safety_category: "3"        # Category 3 safety system
+  last_certification_date: "2025-01-15"
+  next_certification_date: "2026-01-15"
+  
+  # Safety standards compliance
+  compliance:
+    iso_10218_1: true    # Industrial robots safety requirements
+    iso_13849_1: true    # Safety of machinery - Safety-related parts
+    iso_12100: true      # Safety of machinery - General principles
+    ansi_r15_06: true    # Industrial robots and robot systems - Safety requirements
+    ce_marking: true     # European Conformity
+    ul_1740: false       # Underwriters Laboratory (optional)
+    
+  # Safety integrity levels
+  integrity:
+    hardware_sil: "SIL 2"  # Safety Integrity Level
+    software_sil: "SIL 2"
+    mean_time_to_failure: 100000  # hours
+    diagnostic_coverage: 0.99     # 99% coverage
+    
+  # Safety monitoring architecture
+  monitoring:
+    architecture: "dual_channel"  # dual_channel, single_channel, diverse_redundant
+    voting_logic: "2oo2"          # 2-out-of-2 voting
+    watchdog_enabled: true
+    watchdog_timeout: 0.1         # 100ms
+    heartbeat_frequency: 10       # Hz
+
+# ============================================
+# JOINT LIMITS - HARDWARE PHYSICAL LIMITS
+# ============================================
+joint_limits_hardware:
+  # UR10e Absolute Mechanical Limits (from manufacturer specifications)
+  absolute_limits:
+    shoulder_pan_joint:
+      type: "continuous"
+      mechanical_lower: -6.28318530718  # -360° (continuous rotation)
+      mechanical_upper: 6.28318530718   # +360°
+      mechanical_stops: false
+      max_continuous_torque: 330.0      # Nm
+      peak_torque: 560.0                # Nm (short duration)
+      backlash: 0.000174533             # 0.01° backlash compensation
+      
+    shoulder_lift_joint:
+      type: "revolute"
+      mechanical_lower: -6.28318530718  # -360°
+      mechanical_upper: 6.28318530718   # +360°
+      mechanical_stops: true            # Physical hard stops
+      max_continuous_torque: 330.0      # Nm
+      peak_torque: 560.0
+      backlash: 0.000174533
+      
+    elbow_joint:
+      type: "revolute"
+      mechanical_lower: -3.14159265359  # -180°
+      mechanical_upper: 3.14159265359   # +180°
+      mechanical_stops: true
+      max_continuous_torque: 150.0      # Nm
+      peak_torque: 250.0
+      backlash: 0.000174533
+      
+    wrist_1_joint:
+      type: "continuous"
+      mechanical_lower: -6.28318530718  # -360°
+      mechanical_upper: 6.28318530718   # +360°
+      mechanical_stops: false
+      max_continuous_torque: 56.0       # Nm
+      peak_torque: 90.0
+      backlash: 0.0000872665            # 0.005° (higher precision)
+      
+    wrist_2_joint:
+      type: "continuous"
+      mechanical_lower: -6.28318530718  # -360°
+      mechanical_upper: 6.28318530718   # +360°
+      mechanical_stops: false
+      max_continuous_torque: 56.0       # Nm
+      peak_torque: 90.0
+      backlash: 0.0000872665
+      
+    wrist_3_joint:
+      type: "continuous"
+      mechanical_lower: -6.28318530718  # -360°
+      mechanical_upper: 6.28318530718   # +360°
+      mechanical_stops: false
+      max_continuous_torque: 56.0       # Nm
+      peak_torque: 90.0
+      backlash: 0.0000872665
+
+# ============================================
+# OPERATIONAL LIMITS - SOFTWARE ENFORCED
+# ============================================
+operational_limits:
+  # Soft Limits (with safety margin from hardware limits)
+  soft_limits:
+    shoulder_pan_joint:
+      lower: -6.108652381  # -350° (10° safety margin)
+      upper: 6.108652381   # +350°
+      margin: 0.174532925  # 10° margin
+      violation_response: "decelerate_to_stop"
+      response_time: 0.2   # seconds
+      
+    shoulder_lift_joint:
+      lower: -5.934119456  # -340° (20° margin near singularity)
+      upper: 5.934119456   # +340°
+      margin: 0.34906585   # 20° margin
+      violation_response: "emergency_stop"
+      response_time: 0.05
+      
+    elbow_joint:
+      lower: -2.967059728  # -170° (10° margin)
+      upper: 2.967059728   # +170°
+      margin: 0.174532925
+      violation_response: "decelerate_to_stop"
+      response_time: 0.2
+      
+    wrist_1_joint:
+      lower: -6.108652381  # -350°
+      upper: 6.108652381   # +350°
+      margin: 0.174532925
+      violation_response: "reduce_speed"
+      response_time: 0.1
+      
+    wrist_2_joint:
+      lower: -6.108652381  # -350°
+      upper: 6.108652381   # +350°
+      margin: 0.174532925
+      violation_response: "reduce_speed"
+      response_time: 0.1
+      
+    wrist_3_joint:
+      lower: -6.108652381  # -350°
+      upper: 6.108652381   # +350°
+      margin: 0.174532925
+      violation_response: "reduce_speed"
+      response_time: 0.1
+      
+  # Velocity Limits (rad/s)
+  velocity_limits:
+    shoulder_pan_joint:
+      continuous: 2.094395102  # 120°/s (from datasheet)
+      operational: 1.675516082  # 96°/s (80% for safety)
+      emergency: 0.523598776   # 30°/s (emergency slow speed)
+      acceleration_limit: 5.235987756  # 300°/s²
+      jerk_limit: 52.35987756   # 3000°/s³
+      
+    shoulder_lift_joint:
+      continuous: 2.094395102  # 120°/s
+      operational: 1.675516082  # 96°/s
+      emergency: 0.523598776   # 30°/s
+      acceleration_limit: 5.235987756  # 300°/s²
+      jerk_limit: 52.35987756   # 3000°/s³
+      
+    elbow_joint:
+      continuous: 2.094395102  # 120°/s
+      operational: 1.675516082  # 96°/s
+      emergency: 0.523598776   # 30°/s
+      acceleration_limit: 5.235987756  # 300°/s²
+      jerk_limit: 52.35987756   # 3000°/s³
+      
+    wrist_1_joint:
+      continuous: 3.141592654  # 180°/s
+      operational: 2.513274123  # 144°/s (80%)
+      emergency: 0.785398163   # 45°/s
+      acceleration_limit: 7.853981634  # 450°/s²
+      jerk_limit: 78.53981634   # 4500°/s³
+      
+    wrist_2_joint:
+      continuous: 3.141592654  # 180°/s
+      operational: 2.513274123  # 144°/s
+      emergency: 0.785398163   # 45°/s
+      acceleration_limit: 7.853981634  # 450°/s²
+      jerk_limit: 78.53981634   # 4500°/s³
+      
+    wrist_3_joint:
+      continuous: 3.141592654  # 180°/s
+      operational: 2.513274123  # 144°/s
+      emergency: 0.785398163   # 45°/s
+      acceleration_limit: 7.853981634  # 450°/s²
+      jerk_limit: 78.53981634   # 4500°/s³
+      
+  # Torque/Current Limits (Nm)
+  torque_limits:
+    shoulder_pan_joint:
+      continuous: 330.0      # Nm
+      operational: 264.0     # 80% for continuous operation
+      peak: 560.0           # Short duration (< 2 seconds)
+      peak_duration: 2.0    # seconds
+      overload_factor: 1.5  # Safety factor for overload detection
+      
+    shoulder_lift_joint:
+      continuous: 330.0
+      operational: 264.0
+      peak: 560.0
+      peak_duration: 2.0
+      overload_factor: 1.5
+      
+    elbow_joint:
+      continuous: 150.0
+      operational: 120.0
+      peak: 250.0
+      peak_duration: 2.0
+      overload_factor: 1.5
+      
+    wrist_1_joint:
+      continuous: 56.0
+      operational: 44.8
+      peak: 90.0
+      peak_duration: 2.0
+      overload_factor: 1.5
+      
+    wrist_2_joint:
+      continuous: 56.0
+      operational: 44.8
+      peak: 90.0
+      peak_duration: 2.0
+      overload_factor: 1.5
+      
+    wrist_3_joint:
+      continuous: 56.0
+      operational: 44.8
+      peak: 90.0
+      peak_duration: 2.0
+      overload_factor: 1.5
+      
+  # Temperature Limits (°C)
+  temperature_limits:
+    motor_windings:
+      warning: 70    # °C
+      critical: 85   # °C
+      shutdown: 100  # °C
+      thermal_time_constant: 300  # seconds
+      
+    gearbox:
+      warning: 60    # °C
+      critical: 75   # °C
+      shutdown: 90   # °C
+      
+    electronics:
+      warning: 65    # °C
+      critical: 80   # °C
+      shutdown: 95   # °C
+      
+    ambient:
+      operating_min: 0     # °C
+      operating_max: 45    # °C
+      storage_min: -20     # °C
+      storage_max: 60      # °C
+
+# ============================================
+# CARTESIAN WORKSPACE SAFETY LIMITS
+# ============================================
+cartesian_safety:
+  # Workspace boundaries (meters)
+  workspace_boundaries:
+    # Primary workspace (guaranteed by manufacturer)
+    primary:
+      type: "sphere_sector"
+      center: [0.0, 0.0, 0.0]
+      radius_min: 0.5   # meters
+      radius_max: 1.3   # meters
+      theta_min: -3.14159  # -180°
+      theta_max: 3.14159   # +180°
+      phi_min: -1.91986    # -110°
+      phi_max: 1.91986     # +110°
+      volume: 6.28         # m³ (approximate)
+      
+    # Operational workspace (with safety margins)
+    operational:
+      type: "sphere_sector"
+      center: [0.0, 0.0, 0.0]
+      radius_min: 0.55   # 5cm safety margin
+      radius_max: 1.25   # 5cm safety margin
+      theta_min: -2.96706  # -170°
+      theta_max: 2.96706   # +170°
+      phi_min: -1.74533    # -100°
+      phi_max: 1.74533     # +100°
+      
+    # Restricted zones (no-go areas)
+    restricted_zones:
+      - name: "base_protection"
+        type: "cylinder"
+        center: [0.0, 0.0, 0.0]
+        radius: 0.3
+        height: 0.5
+        priority: 100  # Highest priority
+        response: "emergency_stop"
+        
+      - name: "cable_management"
+        type: "box"
+        min: [-0.2, -0.2, 0.8]
+        max: [0.2, 0.2, 1.2]
+        priority: 75
+        response: "warning_and_slow"
+        
+      - name: "human_collaboration_zone"
+        type: "sphere"
+        center: [0.8, 0.0, 1.0]
+        radius: 0.6
+        priority: 90
+        response: "reduce_speed_to_250mm/s"  # ISO/TS 15066 requirement
+        
+  # Speed and force limits in Cartesian space
+  cartesian_limits:
+    # Speed limits (m/s)
+    tcp_speed:
+      normal_operation: 1.0      # m/s
+      precision_operation: 0.25  # m/s
+      human_collaboration: 0.25  # m/s (ISO/TS 15066)
+      emergency_slow: 0.1        # m/s
+      
+    # Force limits (N)
+    contact_force:
+      normal_operation: 150.0    # N
+      collaborative_operation: 80.0  # N (ISO/TS 15066)
+      safety_monitored_stop: 40.0    # N
+      emergency_stop: 0.0        # N (power removal)
+      
+    # Power and force limiting (PFL) - ISO/TS 15066
+    power_force_limiting:
+      enabled: true
+      max_power: 80.0  # Watts
+      max_force: 150.0 # N
+      force_rate_limit: 1000.0  # N/s
+      monitoring_frequency: 1000  # Hz
+      
+  # Collision detection parameters
+  collision_detection:
+    enabled: true
+    method: "model_based"  # model_based, sensor_based, hybrid
+    
+    # Model-based detection
+    model_based:
+      sensitivity: "high"
+      collision_threshold: 0.02  # 20mm penetration threshold
+      pre_collision_warning: 0.05  # 50mm warning distance
+      response_time: 0.05  # 50ms reaction time
+      
+    # Sensor-based detection
+    sensor_based:
+      sensor_type: "torque_estimation"  # torque, current, vision, lidar
+      torque_threshold: 1.5  # Nm above expected
+      current_threshold: 1.2  # 20% above expected
+      filtering_window: 10    # samples
+      
+    # Hybrid approach
+    hybrid:
+      primary: "model_based"
+      secondary: "sensor_based"
+      voting_logic: "1oo2"  # 1-out-of-2 for detection
+      
+  # Singularity handling
+  singularity_protection:
+    enabled: true
+    
+    # Shoulder singularity (arm fully extended)
+    shoulder_singularity:
+      condition: "abs(shoulder_lift_joint + elbow_joint) < 0.1745"  # < 10°
+      detection_tolerance: 0.0873  # 5°
+      response: "avoid_with_margin"
+      margin: 0.3491  # 20° avoidance margin
+      speed_reduction: 0.5  # 50% speed reduction in zone
+      
+    # Wrist singularity (wrist axes aligned)
+    wrist_singularity:
+      condition: "abs(wrist_1_joint - wrist_3_joint) < 0.1745"  # < 10°
+      detection_tolerance: 0.0873
+      response: "avoid_with_margin"
+      margin: 0.3491
+      speed_reduction: 0.5
+      
+    # Elbow singularity (elbow at limit)
+    elbow_singularity:
+      condition: "abs(elbow_joint) > 2.9671"  # > 170°
+      response: "soft_limit_warning"
+      warning_margin: 0.1745  # 10°
+
+# ============================================
+# EMERGENCY STOP AND SAFETY FUNCTIONS
+# ============================================
+emergency_functions:
+  # Emergency stop categories (IEC 60204-1)
+  emergency_stop:
+    category: "0"  # Category 0 (uncontrolled stop, remove power)
+    response_time: 0.05  # 50ms maximum
+    deceleration_rate: "maximum"  # Use maximum possible deceleration
+    braking_method: "dynamic_braking"
+    
+    # Redundancy requirements
+    redundancy:
+      channels: 2
+      voting: "2oo2"  # 2-out-of-2 voting
+      diversity: true  # Diverse hardware/software
+      
+    # Monitoring
+    monitoring:
+      circuit_continuity: true
+      contact_welding: true
+      mechanical_integrity: true
+      test_interval: 86400  # Daily self-test (seconds)
+      
+  # Protective stop functions
+  protective_stops:
+    - name: "protective_stop_1"
+      category: "1"  # Category 1 (controlled stop with power on)
+      condition: "safety_zone_violation"
+      response_time: 0.1  # 100ms
+      deceleration: "controlled"
+      
+    - name: "protective_stop_2"
+      category: "2"  # Category 2 (controlled stop with power maintained)
+      condition: "temporary_obstruction"
+      response_time: 0.2  # 200ms
+      restart_method: "manual"
+      
+  # Safeguarded stop functions
+  safeguarded_stops:
+    - name: "safety_rated_monitored_stop"
+      standard: "ISO 13849-1"
+      performance_level: "PLd"
+      stop_time: 0.5  # seconds
+      position_accuracy: 0.01  # 10mm
+      
+    - name: "safety_rated_slow_speed"
+      standard: "ISO/TS 15066"
+      max_speed: 0.25  # m/s
+      monitoring_accuracy: 0.01  # 10mm/s
+      
+  # Safe torque off (STO)
+  safe_torque_off:
+    enabled: true
+    standard: "IEC 61800-5-2"
+    safety_level: "SIL 2"
+    response_time: 0.02  # 20ms
+    test_interval: 86400  # Daily
+    
+    # Monitoring functions
+    monitoring:
+      torque_monitoring: true
+      current_monitoring: true
+      temperature_monitoring: true
+      voltage_monitoring: true
+      
+  # Safe stop functions
+  safe_stop_functions:
+    - name: "safe_stop_1"
+      type: "stopping_with_brake"
+      deceleration: 5.0  # m/s²
+      stopping_distance: 0.1  # meters
+      
+    - name: "safe_stop_2"
+      type: "stopping_without_brake"
+      deceleration: 2.0  # m/s²
+      stopping_distance: 0.25  # meters
+
+# ============================================
+# HUMAN-ROBOT COLLABORATION (HRC) SAFETY
+# ============================================
+hrc_safety:
+  # Collaborative operation modes (ISO/TS 15066)
+  collaborative_modes:
+    - name: "safety_rated_monitored_stop"
+      description: "Robot stops when human enters workspace"
+      max_robot_speed: 0.0  # m/s
+      human_presence_detection: "required"
+      
+    - name: "hand_guiding"
+      description: "Human directly guides robot"
+      max_force: 40.0  # N
+      max_power: 80.0  # W
+      guidance_device: "required"
+      
+    - name: "speed_and_separation_monitoring"
+      description: "Robot speed limited based on distance"
+      speed_limits:
+        distance_0_100mm: 0.15  # m/s
+        distance_100_200mm: 0.20
+        distance_200_300mm: 0.25
+        distance_300_400mm: 0.30
+        distance_400_500mm: 0.35
+        distance_500mm_plus: 1.00
+      monitoring_frequency: 30  # Hz
+      
+    - name: "power_and_force_limiting"
+      description: "Robot limits power and contact force"
+      max_contact_force: 150.0  # N
+      max_power: 80.0  # W
+      force_rate_limit: 1000.0  # N/s
+      
+  # Human detection and monitoring
+  human_detection:
+    method: "multi_sensor"  # vision, lidar, safety_scanner, pressure_mat
+    
+    sensors:
+      - type: "safety_laser_scanner"
+        model: "SICK S3000"
+        range: 5.0  # meters
+        angular_resolution: 0.25  # degrees
+        update_rate: 40  # Hz
+        
+      - type: "3d_camera"
+        model: "Intel RealSense D435"
+        range: 3.0  # meters
+        resolution: "1280x720"
+        update_rate: 30  # Hz
+        
+      - type: "safety_mats"
+        location: "workspace_perimeter"
+        sensitivity: "high"
+        response_time: 0.1  # seconds
+        
+    # Data fusion
+    fusion:
+      algorithm: "kalman_filter"
+      confidence_threshold: 0.95
+      false_positive_rate: 0.01
+      false_negative_rate: 0.001
+      
+  # Biomechanical limits (ISO/TS 15066 Annex A)
+  biomechanical_limits:
+    # Pain threshold for different body regions
+    pain_thresholds:
+      head_neck: 130.0  # N
+      chest_back: 210.0  # N
+      abdomen: 140.0  # N
+      upper_arm: 160.0  # N
+      forearm_hand: 140.0  # N
+      thigh: 310.0  # N
+      lower_leg_foot: 210.0  # N
+      
+    # Quasi-static contact (clamping)
+    quasi_static_contact:
+      max_force: 150.0  # N (general limit)
+      max_pressure: 290.0  # N/cm²
+      max_penetration: 20.0  # mm
+      
+    # Transient contact (impact)
+    transient_contact:
+      max_energy: 1.5  # Joules
+      max_force: 300.0  # N (peak)
+      max_duration: 0.5  # seconds
+
+# ============================================
+# SAFETY MONITORING AND DIAGNOSTICS
+# ============================================
+safety_monitoring:
+  # Continuous monitoring parameters
+  continuous_monitoring:
+    enabled: true
+    sampling_rates:
+      joint_positions: 125  # Hz
+      joint_velocities: 125  # Hz
+      joint_torques: 125  # Hz
+      temperatures: 10  # Hz
+      safety_signals: 100  # Hz
+      
+    # Monitoring windows
+    monitoring_windows:
+      short_term: 1.0  # seconds
+      medium_term: 10.0  # seconds
+      long_term: 60.0  # seconds
+      
+  # Threshold monitoring
+  threshold_monitoring:
+    position_thresholds:
+      warning: 0.01  # 10mm
+      critical: 0.02  # 20mm
+      emergency: 0.05  # 50mm
+      
+    velocity_thresholds:
+      warning: 0.8  # 80% of limit
+      critical: 0.9  # 90% of limit
+      emergency: 1.0  # 100% of limit
+      
+    torque_thresholds:
+      warning: 0.7  # 70% of continuous
+      critical: 0.85 # 85% of continuous
+      emergency: 1.0  # 100% of continuous
+      
+    temperature_thresholds:
+      warning: 0.8  # 80% of limit
+      critical: 0.9  # 90% of limit
+      emergency: 1.0  # 100% of limit
+      
+  # Trend analysis
+  trend_analysis:
+    enabled: true
+    analysis_periods:
+      short_trend: 60  # seconds
+      medium_trend: 300  # seconds
+      long_trend: 3600  # seconds
+      
+    predictive_indicators:
+      - indicator: "torque_increase_rate"
+        threshold: 10.0  # Nm/s
+        prediction_horizon: 5.0  # seconds
+        
+      - indicator: "temperature_gradient"
+        threshold: 0.5  # °C/s
+        prediction_horizon: 10.0  # seconds
+        
+      - indicator: "vibration_increase"
+        threshold: 0.1  # g/s
+        prediction_horizon: 2.0  # seconds
+        
+  # Diagnostic coverage
+  diagnostic_coverage:
+    position_sensors: 0.99
+    velocity_sensors: 0.99
+    torque_sensors: 0.95
+    temperature_sensors: 0.90
+    safety_circuits: 0.99
+    
+  # Failure modes and effects analysis (FMEA)
+  fmea:
+    enabled: true
+    update_frequency: "monthly"
+    
+    critical_failures:
+      - failure: "position_sensor_loss"
+        effect: "uncontrolled_motion"
+        risk_level: "high"
+        mitigation: "dual_redundant_sensors"
+        
+      - failure: "brake_failure"
+        effect: "gravity_fall"
+        risk_level: "high"
+        mitigation: "dual_brakes_spring_loaded"
+        
+      - failure: "controller_failure"
+        effect: "unpredictable_motion"
+        risk_level: "critical"
+        mitigation: "safety_rated_controller"
+        
+      - failure: "communication_loss"
+        effect: "loss_of_control"
+        risk_level: "medium"
+        mitigation: "watchdog_timer"
+
+# ============================================
+# SAFETY VALIDATION AND TESTING
+# ============================================
+safety_validation:
+  # Automated safety tests
+  automated_tests:
+    enabled: true
+    schedule: "daily"  # daily, weekly, monthly
+    
+    tests:
+      - name: "emergency_stop_test"
+        frequency: "daily"
+        test_points: 5
+        pass_criteria: "response_time < 0.05s"
+        
+      - name: "limit_switch_test"
+        frequency: "weekly"
+        test_joints: "all"
+        pass_criteria: "all_switches_functional"
+        
+      - name: "torque_limiter_test"
+        frequency: "monthly"
+        test_loads: [25%, 50%, 75%]
+        pass_criteria: "limit_within_5%"
+        
+      - name: "collision_detection_test"
+        frequency: "weekly"
+        test_obstacles: 3
+        pass_criteria: "detection_within_0.02s"
+        
+  # Manual safety inspections
+  manual_inspections:
+    required: true
+    schedule: "monthly"
+    
+    inspection_items:
+      - item: "mechanical_stops"
+        criteria: "no_visible_damage"
+        
+      - item: "cable_integrity"
+        criteria: "no_fraying_or_damage"
+        
+      - item: "brake_function"
+        criteria: "holds_load_at_150%"
+        
+      - item: "safety_labels"
+        criteria: "legible_and_correct"
+        
+  # Documentation requirements
+  documentation:
+    safety_manual: true
+    risk_assessment: true
+    validation_report: true
+    maintenance_log: true
+    incident_log: true
+    
+    retention_period: 10  # years
+    archive_format: "digital_signed_pdf"
+
+# ============================================
+# SAFETY COMMUNICATION PROTOCOLS
+# ============================================
+safety_communication:
+  # Safety bus protocols
+  safety_bus:
+    protocol: "CIP_Safety"  # CIP Safety, PROFIsafe, FSoE
+    update_time: 0.01  # 10ms
+    watchdog_time: 0.1  # 100ms
+    
+    # Redundancy
+    redundancy:
+      enabled: true
+      method: "media_redundancy"  # media, path, device
+      switchover_time: 0.001  # 1ms
+      
+  # Safety over Ethernet
+  safety_over_ethernet:
+    enabled: true
+    standard: "IEC 61784-3"
+    safety_layer: "black_channel"
+    crc_polynomial: "0xEDB88320"
+    sequence_number_bits: 16
+    
+  # Safety data validation
+  data_validation:
+    crc_check: true
+    sequence_check: true
+    timestamp_check: true
+    plausibility_check: true
+    
+    validation_timeout: 0.1  # 100ms
+    max_retries: 3
+
+# ============================================
+# SAFETY INTERLOCKS AND PERMISSIVES
+# ============================================
+safety_interlocks:
+  # Hardware interlocks
+  hardware_interlocks:
+    - name: "safety_gate"
+      type: "position_switch"
+      category: "4"  # Category 4 (highest)
+      position: "closed"
+      action: "enable_operation"
+      
+    - name: "light_curtain"
+      type: "opto_electric"
+      category: "4"
+      status: "clear"
+      action: "enable_operation"
+      
+    - name: "emergency_stop_button"
+      type: "mushroom_button"
+      category: "0"
+      position: "released"
+      action: "enable_operation"
+      
+  # Software interlocks
+  software_interlocks:
+    - name: "workspace_boundary"
+      condition: "tool_in_workspace"
+      action: "allow_motion"
+      
+    - name: "singularity_proximity"
+      condition: "not_near_singularity"
+      action: "allow_motion"
+      
+    - name: "collision_clearance"
+      condition: "clearance > 0.1m"
+      action: "allow_full_speed"
+      
+  # Permission systems
+  permission_systems:
+    - name: "key_switch"
+      levels: ["off", "manual", "automatic"]
+      required_for: ["maintenance", "operation", "programming"]
+      
+    - name: "password_protection"
+      levels: ["operator", "technician", "engineer"]
+      timeout: 300  # 5 minutes
+      
+    - name: "biometric_authentication"
+      methods: ["fingerprint", "rfid_card"]
+      required_for: "safety_parameter_changes"
+
+# ============================================
+# END OF SAFETY LIMITS CONFIGURATION
+# ============================================

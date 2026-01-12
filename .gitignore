@@ -1,0 +1,625 @@
+# ============================================================================
+# .gitignore - Git Version Control Exclusions
+# ML-Based Object Picking Robot Project
+# ============================================================================
+# 
+# Excludes files from version control that are:
+# - Build artifacts and compiled binaries
+# - Temporary files and caches
+# - User-specific configurations
+# - Large binary files (models, datasets)
+# - Sensitive information (keys, credentials)
+# - System-generated files
+# 
+# Author: Victor's Production Team
+# Date: 2025-01-12
+# Version: 1.0.0
+# 
+# ============================================================================
+
+# ============================================================================
+# ROS2 BUILD ARTIFACTS
+# ============================================================================
+ros2_ws/build/
+ros2_ws/install/
+ros2_ws/log/
+
+# Individual package build directories
+**/build/
+**/install/
+**/log/
+
+# Colcon artifacts
+.colcon/
+*.colcon_ignore
+
+# ROS generated messages
+**/msg_gen/
+**/srv_gen/
+**/action_gen/
+
+# ============================================================================
+# PYTHON
+# ============================================================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+coverage/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff
+instance/
+.webassets-cache
+
+# Scrapy stuff
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+docs/_static/
+docs/_templates/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# ============================================================================
+# C / C++
+# ============================================================================
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+!*Config.cmake
+!*-config.cmake
+_deps/
+compile_commands.json
+
+# QtCreator
+*.autosave
+*.user
+*.qbs.user
+
+# CLion
+.idea/
+cmake-build-*/
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# ============================================================================
+# MACHINE LEARNING & AI
+# ============================================================================
+# Model files (large binaries - use Git LFS or external storage)
+*.h5
+*.hdf5
+*.pb
+*.pth
+*.pt
+*.onnx
+*.tflite
+*.caffemodel
+*.keras
+
+# Training outputs
+checkpoints/
+saved_models/
+runs/
+lightning_logs/
+mlruns/
+wandb/
+
+# TensorBoard
+events.out.tfevents.*
+
+# Weights & Biases
+wandb/
+
+# MLflow
+mlruns/
+
+# DVC
+.dvc/
+*.dvc
+
+# ============================================================================
+# DATASETS & DATA
+# ============================================================================
+# Raw datasets (too large for git)
+ml_training/datasets/raw/*
+ml_training/datasets/coco/*
+ml_training/datasets/custom/*
+
+# Keep README files in dataset directories
+!ml_training/datasets/**/README.md
+
+# Processed data
+data/processed/*
+data/cache/*
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# CSV/JSON data files (if large)
+# *.csv
+# *.json
+# Uncomment above if datasets are large
+
+# ============================================================================
+# LOGS & TEMPORARY FILES
+# ============================================================================
+# Log files
+*.log
+*.log.*
+logs/
+log/
+*.out
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.*.swp
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+*~
+
+# ============================================================================
+# OPERATING SYSTEM FILES
+# ============================================================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ============================================================================
+# IDE & EDITOR FILES
+# ============================================================================
+# Eclipse
+.project
+.cproject
+.pydevproject
+.settings/
+.buildpath
+
+# IntelliJ IDEA
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# NetBeans
+nbproject/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Atom
+.atom/
+
+# Vim
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+Session.vim
+Sessionx.vim
+.netrwhist
+tags
+[._]*.un~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ============================================================================
+# DOCKER
+# ============================================================================
+# Docker volumes and local data
+.docker/
+docker-compose.override.yml
+docker-compose.local.yml
+
+# ============================================================================
+# CREDENTIALS & SECRETS
+# ============================================================================
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Secret files
+secrets/
+*.key
+*.pem
+*.p12
+*.pfx
+*.cer
+*.crt
+*.der
+*.pub
+id_rsa*
+*.ppk
+
+# AWS
+.aws/
+credentials
+
+# Google Cloud
+*service-account*.json
+gcloud-service-key.json
+
+# API keys
+api_keys.json
+api_keys.yaml
+
+# ============================================================================
+# HARDWARE CALIBRATION
+# ============================================================================
+# Calibration data (hardware-specific, regenerate per system)
+**/calibration_data/
+**/calibration_results/
+camera_calibration_*.yaml
+
+# Keep example calibration files
+!**/calibration/example_*.yaml
+!**/calibration/template_*.yaml
+
+# ============================================================================
+# SIMULATION & VISUALIZATION
+# ============================================================================
+# Gazebo
+.gazebo/
+*.world~
+
+# RViz temporary files
+*.rviz~
+
+# ============================================================================
+# TESTING
+# ============================================================================
+# Test results
+test-results/
+test_results/
+*.xml
+*.junit
+
+# Coverage reports
+.coverage
+htmlcov/
+
+# ============================================================================
+# DOCUMENTATION BUILD
+# ============================================================================
+# Sphinx
+docs/_build/
+docs/_static/
+docs/_templates/
+
+# Doxygen
+doxygen/html/
+doxygen/latex/
+
+# ============================================================================
+# PACKAGE MANAGERS
+# ============================================================================
+# npm
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+
+# Yarn
+.yarn/
+.pnp.*
+
+# ============================================================================
+# CI/CD
+# ============================================================================
+# GitHub Actions cache
+.github/workflows/cache/
+
+# ============================================================================
+# MISC
+# ============================================================================
+# System monitoring
+.pid
+*.sock
+
+# Archives (should not be in repo)
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+*.bz2
+*.xz
+*.Z
+
+# Media files (if test assets are large)
+# *.mp4
+# *.avi
+# *.mov
+# *.jpg
+# *.png
+# Uncomment if you want to exclude test media
+
+# Compressed files
+*.gz
+*.bz2
+
+# Core dumps
+core
+core.*
+
+# ============================================================================
+# PROJECT-SPECIFIC
+# ============================================================================
+# Robot-specific configuration (regenerate per robot)
+robot_serial_*.yaml
+robot_config_local.yaml
+
+# Collected data during operation
+collected_data/
+recorded_trajectories/
+captured_images/
+
+# Training runs
+training_runs/
+experiment_results/
+
+# Performance logs
+performance_data/
+benchmarks/*.json
+
+# ============================================================================
+# KEEP IMPORTANT FILES
+# ============================================================================
+# Keep Git LFS tracking
+!.gitattributes
+
+# Keep essential configs
+!**/config/example_*.yaml
+!**/config/default_*.yaml
+
+# Keep documentation
+!README.md
+!CHANGELOG.md
+!LICENSE
+!CONTRIBUTING.md
+
+# Keep Docker configs
+!Dockerfile
+!docker-compose.yml
+!.dockerignore
+
+# Keep CI/CD configs
+!.github/workflows/*.yml
+!.gitlab-ci.yml
+
+# ============================================================================
+# Git LFS (Large File Storage) - For tracking large files
+# ============================================================================
+# To use Git LFS for models:
+# git lfs track "*.pth"
+# git lfs track "*.h5"
+# git lfs track "*.onnx"

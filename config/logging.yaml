@@ -1,0 +1,872 @@
+# ml-object-picking-robot/config/logging.yaml
+# Comprehensive logging configuration for ML-Based Object Picking Robot
+# Production-ready logging with structured output and monitoring
+
+# ============================================
+# LOGGING SYSTEM OVERVIEW
+# ============================================
+logging_system:
+  version: "2.0"
+  schema: "structured"
+  timestamp_format: "iso8601"
+  timezone: "UTC"
+  
+  # System identifiers
+  system_id: "${HOSTNAME:-unknown}"
+  robot_id: "${ROBOT_ID:-dev-001}"
+  deployment_env: "${DEPLOYMENT_ENV:-development}"
+  
+  # Control flags
+  enabled: true
+  async_logging: true
+  queue_size: 10000
+  drop_when_full: false
+
+# ============================================
+# LOG LEVEL CONFIGURATION
+# ============================================
+log_levels:
+  # Global default
+  default: "INFO"
+  
+  # Component-specific log levels
+  components:
+    perception:
+      default: "DEBUG"
+      yolo_detector: "INFO"
+      object_tracker: "DEBUG"
+      obstacle_memory: "INFO"
+      camera_calibration: "WARNING"
+      
+    motion_planning:
+      default: "INFO"
+      trajectory_planner: "DEBUG"
+      inverse_kinematics: "INFO"
+      collision_checker: "WARNING"
+      path_optimizer: "DEBUG"
+      
+    robot_control:
+      default: "WARNING"
+      servo_controller: "INFO"
+      motor_driver: "INFO"
+      gripper_control: "DEBUG"
+      hardware_interface: "ERROR"
+      
+    task_planning:
+      default: "INFO"
+      pick_place_planner: "DEBUG"
+      state_machine: "INFO"
+      safety_monitor: "WARNING"
+      task_executor: "DEBUG"
+      
+    system_monitor:
+      default: "INFO"
+      performance_monitor: "DEBUG"
+      health_checker: "WARNING"
+      logger_node: "INFO"
+      
+    ros_core:
+      default: "WARNING"
+      topics: "INFO"
+      services: "INFO"
+      actions: "DEBUG"
+      
+    external_libraries:
+      torch: "WARNING"
+      opencv: "ERROR"
+      numpy: "ERROR"
+      kdl: "ERROR"
+      
+  # Dynamic log level adjustment
+  dynamic_adjustment:
+    enabled: true
+    based_on_performance: true
+    performance_thresholds:
+      high_load: 80  # CPU percentage
+      high_memory: 85  # Memory percentage
+      slow_inference: 100  # ms
+      
+    load_based_levels:
+      normal: "DEBUG"
+      high_load: "INFO"
+      critical: "WARNING"
+
+# ============================================
+# LOG HANDLERS / APPENDERS
+# ============================================
+handlers:
+  # Console output (for development/debugging)
+  console:
+    enabled: true
+    format: "color"
+    output: "stdout"  # stdout | stderr
+    level: "INFO"
+    colors:
+      DEBUG: "cyan"
+      INFO: "green"
+      WARNING: "yellow"
+      ERROR: "red"
+      CRITICAL: "magenta"
+    show_thread: true
+    show_process: false
+    
+  # File handler (rotating files)
+  file:
+    enabled: true
+    base_directory: "/var/log/robot"
+    filename_pattern: "robot_{timestamp}.log"
+    rotation_strategy: "size_time"
+    max_file_size: "100MB"
+    max_files: 10
+    retention_days: 30
+    compression: "gzip"
+    level: "DEBUG"
+    format: "json"  # Structured logging for files
+    
+    # File naming patterns
+    patterns:
+      main: "robot_{date}.log"
+      error: "robot_error_{date}.log"
+      performance: "robot_perf_{date}.log"
+      audit: "robot_audit_{date}.log"
+      
+  # System journal (systemd integration)
+  journal:
+    enabled: true
+    identifier: "ml-object-picking-robot"
+    priority: true
+    syslog_identifier: true
+    level: "WARNING"
+    
+  # Network logging (centralized logging)
+  network:
+    enabled: false  # Enable in production
+    type: "tcp"  # tcp | udp | http
+    host: "log-aggregator.example.com"
+    port: 514
+    protocol: "syslog"
+    queue_size: 5000
+    reconnect_interval: 5
+    timeout: 10
+    level: "INFO"
+    
+  # Database logging (for structured querying)
+  database:
+    enabled: true
+    type: "postgresql"
+    connection_string: "${DB_CONNECTION_STRING}"
+    table_name: "robot_logs"
+    batch_size: 100
+    flush_interval: 5  # seconds
+    level: "INFO"
+    
+    # Schema for database logs
+    schema:
+      columns:
+        - timestamp: "TIMESTAMP"
+        - robot_id: "VARCHAR(50)"
+        - component: "VARCHAR(100)"
+        - level: "VARCHAR(20)"
+        - message: "TEXT"
+        - context: "JSONB"
+        - duration_ms: "FLOAT"
+        - success: "BOOLEAN"
+        
+  # Metrics handler (for performance monitoring)
+  metrics:
+    enabled: true
+    type: "influxdb"
+    host: "localhost"
+    port: 8086
+    database: "robot_metrics"
+    measurement: "logs"
+    flush_interval: 10
+    level: "INFO"
+    
+    # Metrics to capture
+    capture_metrics:
+      - "inference_latency"
+      - "planning_time"
+      - "control_loop_time"
+      - "memory_usage"
+      - "cpu_usage"
+      - "gpu_usage"
+      
+  # Alert handler (for critical errors)
+  alerts:
+    enabled: true
+    channels:
+      email:
+        enabled: false
+        recipients:
+          - "admin@example.com"
+          - "devops@example.com"
+        smtp_server: "smtp.example.com"
+        level: "ERROR"
+        
+      slack:
+        enabled: true
+        webhook_url: "${SLACK_WEBHOOK_URL}"
+        channel: "#robot-alerts"
+        username: "Robot Logger"
+        icon_emoji: ":robot_face:"
+        level: "ERROR"
+        
+      pagerduty:
+        enabled: false
+        integration_key: "${PAGERDUTY_KEY}"
+        level: "CRITICAL"
+
+# ============================================
+# LOG FORMATS
+# ============================================
+formats:
+  # Simple format for console
+  simple:
+    pattern: "[{timestamp}] [{level}] [{component}] {message} {context}"
+    timestamp: "YYYY-MM-DD HH:mm:ss.SSS"
+    include_location: true
+    include_thread: true
+    
+  # JSON format for structured logging
+  json:
+    pattern:
+      timestamp: "{timestamp}"
+      level: "{level}"
+      robot_id: "{robot_id}"
+      component: "{component}"
+      subsystem: "{subsystem}"
+      message: "{message}"
+      context: "{context}"
+      location:
+        file: "{file}"
+        line: "{line}"
+        function: "{function}"
+      thread: "{thread}"
+      process: "{process}"
+      duration_ms: "{duration_ms}"
+      extra_fields: "{extra}"
+      
+    # JSON field ordering
+    field_order:
+      - "timestamp"
+      - "level"
+      - "robot_id"
+      - "component"
+      - "message"
+      - "context"
+      
+  # CSV format for analysis
+  csv:
+    enabled: false
+    delimiter: ","
+    quote_char: '"'
+    escape_char: "\\"
+    fields:
+      - "timestamp"
+      - "level"
+      - "component"
+      - "message"
+      - "duration_ms"
+      
+  # Syslog format
+  syslog:
+    facility: "local0"
+    app_name: "robot-picker"
+    proc_id: "{process}"
+    msg_id: "{message_id}"
+    structured_data: true
+
+# ============================================
+# COMPONENT-SPECIFIC LOGGING
+# ============================================
+components:
+  # Perception system logging
+  perception:
+    # YOLO detector specific
+    yolo_detector:
+      log_detections: true
+      detection_threshold: 0.5
+      log_confidence: true
+      log_bbox: false  # Can be verbose
+      log_class_names: true
+      frame_interval: 10  # Log every 10th frame
+      
+      # Performance metrics
+      metrics:
+        inference_time: true
+        preprocessing_time: true
+        postprocessing_time: true
+        fps: true
+        gpu_memory: true
+        
+    # Object tracker
+    object_tracker:
+      log_tracks: true
+      track_lifetime: true
+      id_assignments: true
+      matching_scores: false
+      
+    # Obstacle memory
+    obstacle_memory:
+      log_updates: false
+      memory_size: true
+      obstacle_count: true
+      spatial_distribution: false
+      
+  # Motion planning logging
+  motion_planning:
+    # Trajectory planning
+    trajectory_planner:
+      log_planning_attempts: true
+      planning_time: true
+      path_length: true
+      smoothness: false
+      collision_checks: true
+      
+    # Inverse kinematics
+    inverse_kinematics:
+      log_solutions: false  # Can be verbose
+      solution_count: true
+      iteration_count: true
+      convergence_time: true
+      jacobian_condition: false
+      
+    # Collision checking
+    collision_checker:
+      log_collisions: true
+      collision_pairs: false
+      clearance_distances: false
+      voxel_count: false
+      
+  # Robot control logging
+  robot_control:
+    # Servo controller
+    servo_controller:
+      log_positions: false
+      log_velocities: false
+      command_execution: true
+      pwm_values: false
+      calibration_data: true
+      
+    # Hardware interface
+    hardware_interface:
+      log_io_operations: false
+      communication_errors: true
+      timeout_events: true
+      buffer_status: false
+      
+  # Task planning logging
+  task_planning:
+    # State machine
+    state_machine:
+      log_state_transitions: true
+      transition_reasons: true
+      state_durations: true
+      guard_conditions: false
+      
+    # Pick and place planner
+    pick_place_planner:
+      log_task_sequence: true
+      object_details: true
+      grasp_attempts: true
+      success_rates: true
+      failure_reasons: true
+      
+  # System monitoring
+  system_monitor:
+    # Performance monitoring
+    performance_monitor:
+      collection_interval: 1.0  # seconds
+      metrics_to_log:
+        - "cpu_percent"
+        - "memory_percent"
+        - "gpu_utilization"
+        - "disk_usage"
+        - "network_io"
+        - "temperature"
+        
+      thresholds:
+        warning:
+          cpu: 80
+          memory: 85
+          temperature: 70
+        critical:
+          cpu: 95
+          memory: 95
+          temperature: 85
+          
+    # Health checker
+    health_checker:
+      check_interval: 5.0
+      log_health_status: true
+      component_status: true
+      dependency_checks: true
+
+# ============================================
+# CONTEXT & META-DATA
+# ============================================
+context:
+  # Automatic context injection
+  automatic:
+    timestamp: true
+    robot_id: true
+    component: true
+    thread_id: true
+    process_id: true
+    hostname: true
+    ip_address: true
+    deployment_env: true
+    
+  # Custom context fields
+  custom:
+    # From environment variables
+    environment:
+      - "ROBOT_MODEL"
+      - "DEPLOYMENT_REGION"
+      - "SOFTWARE_VERSION"
+      
+    # From configuration
+    configuration:
+      - "perception.model"
+      - "motion_planning.planner_type"
+      - "control.hardware_mode"
+      
+    # Runtime context
+    runtime:
+      - "frame_number"
+      - "object_count"
+      - "current_state"
+      - "task_id"
+      
+  # Context propagation
+  propagation:
+    enable_correlation_ids: true
+    correlation_id_header: "X-Correlation-ID"
+    span_id_header: "X-Span-ID"
+    trace_id_header: "X-Trace-ID"
+    
+    # Context inheritance
+    inherit_across_threads: true
+    inherit_across_processes: false
+
+# ============================================
+# LOG FILTERS
+# ============================================
+filters:
+  # Level-based filtering
+  level:
+    - component: "perception.yolo_detector"
+      min_level: "INFO"
+      max_level: "ERROR"
+      
+    - component: "motion_planning.*"
+      min_level: "WARNING"
+      
+    - pattern: "*.debug.*"
+      min_level: "DEBUG"
+      
+  # Content-based filtering
+  content:
+    # Exclude specific patterns
+    exclude:
+      - pattern: "heartbeat"
+        unless_level: "ERROR"
+        
+      - pattern: "status update"
+        min_interval: 5  # seconds
+        
+      - pattern: "debug.*"
+        component: "production"
+        
+    # Include only specific patterns
+    include:
+      - pattern: "error|exception|critical"
+        always: true
+        
+      - pattern: "task.*complete"
+        level: "INFO"
+        
+  # Rate limiting
+  rate_limit:
+    enabled: true
+    rules:
+      - component: "perception.yolo_detector"
+        max_messages_per_second: 100
+        burst_size: 50
+        
+      - component: "system_monitor.performance"
+        max_messages_per_minute: 60
+        
+      - pattern: ".*heartbeat.*"
+        max_messages_per_minute: 12
+        
+  # Duplicate filtering
+  deduplication:
+    enabled: true
+    window_seconds: 60
+    max_duplicates: 5
+    collapse_duplicates: true
+    collapse_message: "Message repeated {count} times in {window}s"
+
+# ============================================
+# LOG ROTATION & RETENTION
+# ============================================
+rotation:
+  # Size-based rotation
+  size_based:
+    enabled: true
+    max_size: "100MB"
+    backup_count: 10
+    compression: true
+    compression_level: 6
+    
+  # Time-based rotation
+  time_based:
+    enabled: true
+    when: "midnight"  # midnight | W0 (Monday) | interval
+    interval: 1
+    backup_count: 30
+    utc: true
+    
+  # Hybrid rotation (size and time)
+  hybrid:
+    enabled: true
+    max_size: "100MB"
+    when: "midnight"
+    backup_count: 100
+    compress: "gz"
+    
+  # Archiving strategy
+  archiving:
+    enabled: true
+    archive_dir: "/var/log/robot/archive"
+    format: "tar.gz"
+    retention_days: 365
+    delete_after_archive: true
+
+# ============================================
+# PERFORMANCE & BUFFERING
+# ============================================
+performance:
+  # Buffering configuration
+  buffering:
+    enabled: true
+    buffer_size: 10000
+    flush_threshold: 0.8  # Flush when 80% full
+    flush_interval: 5  # seconds
+    overflow_strategy: "block"  # block | drop
+    
+  # Async logging
+  async:
+    enabled: true
+    worker_threads: 2
+    queue_size: 10000
+    shutdown_timeout: 30  # seconds
+    drop_when_full: false
+    
+  # Batching for remote handlers
+  batching:
+    enabled: true
+    batch_size: 100
+    max_batch_delay: 1.0  # seconds
+    retry_attempts: 3
+    retry_delay: 0.5  # seconds
+    
+  # Memory management
+  memory:
+    max_memory_mb: 100
+    gc_interval: 60  # seconds
+    object_pooling: true
+
+# ============================================
+# MONITORING & METRICS
+# ============================================
+monitoring:
+  # Self-monitoring of logging system
+  self_monitoring:
+    enabled: true
+    metrics:
+      - "log_throughput"
+      - "queue_size"
+      - "drop_rate"
+      - "handler_latency"
+      - "buffer_utilization"
+      
+    alert_thresholds:
+      queue_utilization: 0.8
+      drop_rate_per_second: 10
+      handler_latency_ms: 100
+      
+  # Integration with system monitoring
+  integration:
+    prometheus:
+      enabled: true
+      port: 9091
+      path: "/metrics"
+      namespace: "robot_logging"
+      
+    statsd:
+      enabled: false
+      host: "localhost"
+      port: 8125
+      prefix: "robot.logging"
+      
+  # Log analysis hints
+  analysis:
+    enable_pattern_detection: true
+    patterns_to_detect:
+      - "error.*rate.*high"
+      - "memory.*leak"
+      - "performance.*degradation"
+      - "connection.*lost"
+      
+    alert_on_patterns: true
+    pattern_cooldown: 300  # seconds
+
+# ============================================
+# SECURITY & COMPLIANCE
+# ============================================
+security:
+  # Log sanitization
+  sanitization:
+    enabled: true
+    patterns:
+      - pattern: "(password|passwd|pwd)=[^&]+"
+        replacement: "[REDACTED]"
+        
+      - pattern: "(token|api_key|secret)=[^&]+"
+        replacement: "[REDACTED]"
+        
+      - pattern: "(\\d{4}-\\d{4}-\\d{4}-\\d{4})"  # Credit card-like
+        replacement: "[REDACTED]"
+        
+      - pattern: "([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})"  # Email
+        replacement: "[EMAIL_REDACTED]"
+        
+  # Access control
+  access_control:
+    file_permissions: "640"  # -rw-r-----
+    directory_permissions: "750"  # drwxr-x---
+    owner: "robot:robot"
+    
+  # Encryption
+  encryption:
+    enabled: false
+    algorithm: "AES-256-GCM"
+    key_rotation_days: 90
+    
+  # Audit logging
+  audit:
+    enabled: true
+    events_to_audit:
+      - "user_login"
+      - "configuration_change"
+      - "system_startup"
+      - "system_shutdown"
+      - "emergency_stop"
+      - "firmware_update"
+      
+    audit_format: "json"
+    audit_location: "/var/log/robot/audit"
+
+# ============================================
+# DEBUGGING & TROUBLESHOOTING
+# ============================================
+debugging:
+  # Debug modes
+  modes:
+    verbose_debug:
+      enabled: false
+      components: ["perception", "motion_planning"]
+      level: "DEBUG"
+      include_hex_dump: false
+      
+    performance_trace:
+      enabled: false
+      trace_duration: 60  # seconds
+      sampling_rate: 100  # Hz
+      
+    memory_profiling:
+      enabled: false
+      interval: 10  # seconds
+      track_allocations: true
+      
+  # Diagnostic tools
+  diagnostics:
+    enable_stack_traces: true
+    stack_trace_depth: 10
+    enable_variable_dumping: false
+    dump_on_error: true
+    
+  # Troubleshooting aids
+  troubleshooting:
+    log_system_state_on_error: true
+    state_components:
+      - "perception.model_status"
+      - "motion_planning.solver_status"
+      - "control.hardware_status"
+      - "task_planning.current_state"
+      
+    generate_debug_report: true
+    report_location: "/tmp/robot_debug"
+
+# ============================================
+# CUSTOM LOG CATEGORIES
+# ============================================
+custom_categories:
+  # Business/domain specific logs
+  business:
+    pick_success:
+      level: "INFO"
+      format: "Picked object {object_id} at {timestamp} with confidence {confidence}"
+      context_fields: ["object_id", "confidence", "grasp_type", "duration_ms"]
+      
+    pick_failure:
+      level: "WARNING"
+      format: "Failed to pick object {object_id}: {reason}"
+      context_fields: ["object_id", "reason", "attempt", "error_code"]
+      
+    task_completed:
+      level: "INFO"
+      format: "Task {task_id} completed in {duration}s with status {status}"
+      context_fields: ["task_id", "duration", "status", "objects_processed"]
+      
+  # Performance categories
+  performance:
+    inference_latency:
+      level: "DEBUG"
+      format: "Inference latency: {latency_ms}ms for {object_count} objects"
+      aggregate: true
+      aggregation_window: 60  # seconds
+      
+    planning_latency:
+      level: "DEBUG"
+      format: "Planning latency: {latency_ms}ms for trajectory {trajectory_id}"
+      context_fields: ["trajectory_id", "waypoint_count", "collision_checks"]
+      
+  # System health categories
+  health:
+    component_status:
+      level: "INFO"
+      format: "Component {component} status: {status}"
+      heartbeat: true
+      heartbeat_interval: 30  # seconds
+      
+    resource_usage:
+      level: "DEBUG"
+      format: "Resource usage - CPU: {cpu}%, Memory: {memory}%, GPU: {gpu}%"
+      sampling_interval: 5  # seconds
+
+# ============================================
+# ENVIRONMENT-SPECIFIC OVERRIDES
+# ============================================
+environment_overrides:
+  development:
+    log_levels:
+      default: "DEBUG"
+    handlers:
+      console:
+        enabled: true
+        level: "DEBUG"
+      file:
+        enabled: true
+        level: "DEBUG"
+      database:
+        enabled: false
+    performance:
+      buffering:
+        enabled: false
+        
+  staging:
+    log_levels:
+      default: "INFO"
+    handlers:
+      console:
+        enabled: false
+      network:
+        enabled: true
+    filters:
+      rate_limit:
+        enabled: true
+        
+  production:
+    log_levels:
+      default: "WARNING"
+      perception: "INFO"
+    handlers:
+      console:
+        enabled: false
+      network:
+        enabled: true
+      alerts:
+        enabled: true
+    security:
+      sanitization:
+        enabled: true
+    performance:
+      async:
+        enabled: true
+      buffering:
+        enabled: true
+
+# ============================================
+# VALIDATION & ERROR HANDLING
+# ============================================
+validation:
+  # Configuration validation
+  validate_on_startup: true
+  required_fields:
+    - "log_levels.default"
+    - "handlers.file.base_directory"
+    
+  # Fallback configuration
+  fallback:
+    enabled: true
+    default_level: "INFO"
+    default_handler: "console"
+    fallback_directory: "/tmp/robot_logs"
+    
+  # Error handling
+  error_handling:
+    handler_errors:
+      strategy: "fallback"  # fallback | ignore | shutdown
+      fallback_handler: "console"
+      max_consecutive_errors: 10
+      
+    configuration_errors:
+      strategy: "use_defaults"
+      log_error: true
+      continue_startup: true
+
+# ============================================
+# INITIALIZATION & SHUTDOWN
+# ============================================
+initialization:
+  # Startup sequence
+  startup:
+    initialize_before_ros: true
+    timeout: 30  # seconds
+    retry_attempts: 3
+    retry_delay: 2  # seconds
+    
+  # Component initialization order
+  initialization_order:
+    - "configuration"
+    - "handlers"
+    - "filters"
+    - "context"
+    - "monitoring"
+    
+shutdown:
+  # Graceful shutdown
+  graceful: true
+  flush_timeout: 30  # seconds
+  close_handlers: true
+  archive_final_logs: true
+  
+  # Emergency shutdown
+  emergency:
+    flush_on_signal: true
+    signals: ["SIGTERM", "SIGINT", "SIGQUIT"]
+    timeout: 5  # seconds

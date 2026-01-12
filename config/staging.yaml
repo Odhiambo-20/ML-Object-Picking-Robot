@@ -1,0 +1,1058 @@
+# ml-object-picking-robot/config/staging.yaml
+# Staging environment configuration for ML-Based Object Picking Robot
+# Mirrors production but with safety features and testing capabilities
+
+# ============================================
+# SYSTEM-WIDE STAGING CONFIGURATION
+# ============================================
+system:
+  name: "ml-object-picking-robot-staging"
+  version: "${APP_VERSION:-1.0.0-rc}"
+  environment: "staging"
+  debug_mode: false
+  log_level: "INFO"
+  strict_mode: true
+  
+  # Staging resource management (simulates production but with limits)
+  resource_limits:
+    cpu_percentage: 85
+    memory_mb: 6144
+    gpu_memory_mb: 3072
+    disk_space_gb: 100
+    network_bandwidth_mbps: 500
+    
+  # Staging features (balance between dev and prod)
+  features:
+    enable_hot_reload: false
+    enable_debug_endpoints: true  # For staging diagnostics
+    enable_profiling: true  # Limited profiling
+    require_hardware_validation: true
+    validate_configuration: true
+    enable_watchdog: true
+    enable_test_mode: true  # Special staging feature
+    
+  # Staging timeouts (slightly more lenient than production)
+  timeouts:
+    startup: 45
+    shutdown: 20
+    service_call: 8
+    motion_planning: 20
+    detection: 3
+    network: 10
+    database: 20
+    
+  # Staging scaling
+  scaling:
+    max_instances: 1
+    load_balancing: false
+    failover_enabled: true
+    health_check_interval: 15
+
+# ============================================
+# ROS2 STAGING CONFIGURATION
+# ============================================
+ros2:
+  distribution: "humble"
+  domain_id: 10  # Staging domain ID
+  
+  # Staging QoS settings (reliable but with some leniency)
+  qos:
+    sensor_data:
+      reliability: "reliable"
+      durability: "volatile"
+      depth: 50
+      deadline:
+        seconds: 2
+        nanoseconds: 0
+    commands:
+      reliability: "reliable"
+      durability: "volatile"
+      depth: 500
+      deadline:
+        seconds: 10
+    status:
+      reliability: "best_effort"
+      durability: "volatile"
+      depth: 100
+      
+  # Staging node configurations
+  nodes:
+    publish_rate: 30.0  # Hz
+    executor_threads: 6
+    spin_timeout: 3000  # ms
+    realtime_priority: 50  # Medium priority
+    cpu_affinity: [0, 1]  # Limited core affinity
+    
+  # Staging topics (staging namespace)
+  topics:
+    camera: "/staging/camera/color/image_raw"
+    depth: "/staging/camera/depth/image_rect_raw"
+    detections: "/staging/perception/detections"
+    filtered_detections: "/staging/perception/detections_filtered"
+    visualization: "/staging/perception/visualization"
+    joint_states: "/staging/joint_states"
+    trajectory: "/staging/motion/trajectory"
+    executed_trajectory: "/staging/motion/executed_trajectory"
+    robot_status: "/staging/system/robot_status"
+    system_health: "/staging/system/health"
+    emergency_stop: "/staging/safety/emergency_stop"
+    test_results: "/staging/tests/results"  # Staging-specific
+    
+  # Staging services
+  services:
+    pick_object: "/staging/task/pick_object"
+    place_object: "/staging/task/place_object"
+    calibrate_camera: "/staging/perception/calibrate_camera"
+    calibrate_robot: "/staging/control/calibrate_robot"
+    system_diagnostics: "/staging/system/diagnostics"
+    run_test_suite: "/staging/tests/run_suite"  # Staging-specific
+    
+  # Staging actions
+  actions:
+    pick_place: "/staging/task/pick_place"
+    calibrate_system: "/staging/system/calibrate"
+    run_diagnostics: "/staging/system/run_diagnostics"
+    execute_test_scenario: "/staging/tests/execute_scenario"  # Staging-specific
+    
+  # Security (relaxed for testing)
+  security:
+    authentication: true
+    encryption: false  # Disabled for easier debugging
+    topic_whitelist: false
+    max_message_size: "50MB"  # Larger for test data
+    
+  # Monitoring
+  monitoring:
+    enable_statistics: true
+    statistics_window: 300  # 5 minutes
+    enable_introspection: true
+    publish_node_stats: true
+
+# ============================================
+# PERCEPTION SYSTEM STAGING CONFIG
+# ============================================
+perception:
+  # Staging ML Model (balanced performance/accuracy)
+  model:
+    name: "yolov5l"  # Large model for staging accuracy
+    path: "/ros2_ws/src/perception_stack/models/yolov5l_custom_staging.pt"
+    input_size: 640
+    confidence_threshold: 0.5  # Balanced threshold
+    iou_threshold: 0.5
+    max_detections: 100
+    classes: 80
+    
+  # Staging camera configuration
+  camera:
+    source: "realsense_d435"  # Same as production
+    serial_number: "${CAMERA_SERIAL:-}"
+    resolution:
+      width: 1280
+      height: 720  # Lower resolution for staging
+    fps: 15  # Lower FPS for staging
+    auto_exposure: true
+    auto_white_balance: true
+    calibration_file: "/etc/robot/camera_calibration_staging.yaml"
+    calibration_interval: 43200  # Recalibrate every 12 hours
+    
+  # Depth camera configuration
+  depth:
+    enabled: true
+    resolution:
+      width: 640
+      height: 480
+    fps: 15
+    depth_units: 0.001
+    depth_scale: 1000.0
+    align_to_color: true
+    
+  # Staging object detection
+  detection:
+    enabled_classes: "all"
+    min_detection_size: 15  # pixels
+    max_detection_size: 800  # pixels
+    tracking_enabled: true
+    tracker_type: "sort"  # Balanced tracking
+    track_confirmation_frames: 2
+    track_deletion_frames: 20
+    class_filter:
+      required: [39, 40, 41, 56, 73]  # Common test objects
+      prohibited: [0, 1, 2, 3]  # Exclude people/vehicles
+    
+  # Staging optimization
+  optimization:
+    use_gpu: true
+    gpu_id: 0
+    half_precision: false  # Disabled for stability testing
+    tensorrt_optimization: false  # Disabled in staging
+    batch_size: 2
+    enable_caching: true
+    cache_size: 500
+    cache_ttl: 1800  # 30 minutes
+    
+  # Staging safety features
+  safety:
+    validate_detections: true
+    spatial_consistency: true
+    temporal_consistency: true
+    confidence_smoothing: true
+    outlier_rejection: true
+    max_frame_skip: 10  # More lenient than production
+    
+  # Staging testing features
+  testing:
+    enable_mock_detections: true  # For testing without camera
+    mock_detection_file: "/staging_data/mock_detections.json"
+    enable_performance_baseline: true
+    baseline_file: "/staging_data/performance_baseline.json"
+    
+  # Staging monitoring
+  monitoring:
+    enable_metrics: true
+    publish_metrics: true
+    metrics_topic: "/staging/perception/metrics"
+    enable_health_check: true
+    health_check_interval: 15
+    failure_threshold: 10  # More lenient
+
+# ============================================
+# MOTION PLANNING STAGING CONFIG
+# ============================================
+motion_planning:
+  # Staging robot parameters
+  robot:
+    model: "ur10e"
+    dof: 6
+    joint_names: ["shoulder_pan_joint", "shoulder_lift_joint", "elbow_joint", 
+                  "wrist_1_joint", "wrist_2_joint", "wrist_3_joint"]
+    home_position: [0.0, -1.57, 1.57, 0.0, 0.0, 0.0]
+    velocity_limits: [1.5, 1.5, 1.5, 1.5, 1.5, 1.5]  # 75% of production
+    acceleration_limits: [3.0, 3.0, 3.0, 3.0, 3.0, 3.0]  # 60% of production
+    torque_limits: [250.0, 250.0, 112.5, 42.0, 42.0, 42.0]  # 75% of production
+    
+  # Staging IK Solver configuration
+  ik_solver:
+    type: "kdl"  # Use KDL for staging (more stable)
+    method: "lma"
+    max_iterations: 200
+    tolerance: 0.001
+    timeout: 0.3  # seconds
+    epsilon: 1e-4
+    
+  # Staging motion planner
+  planner:
+    type: "ompl"
+    algorithm: "RRTConnect"  # Balanced planning
+    planning_time: 5.0  # seconds
+    goal_tolerance: 0.01  # 1cm tolerance
+    collision_checking: true
+    simplify_path: true
+    simplify_time: 0.5
+    interpolate_path: true
+    interpolation_step: 0.02  # meters
+    
+  # Staging trajectory generation
+  trajectory:
+    time_scaling: "trapezoidal"
+    max_velocity_scale: 0.6  # 60% for safety
+    max_acceleration_scale: 0.5
+    max_jerk: 50.0  # rad/s³
+    discretization: 0.005  # 5ms
+    blending_radius: 0.05  # 5cm blending radius
+    
+  # Staging collision checking
+  collision:
+    enabled: true
+    checker: "fcl"
+    padding: 0.1  # 10cm safety margin (larger than prod for safety)
+    continuous_collision_checking: true
+    self_collision_checking: true
+    environment_collision_checking: true
+    collision_map_topic: "/staging/environment/collision_map"
+    
+  # Staging robot interface
+  robot_interface:
+    type: "ur_modern_driver"
+    ip_address: "${STAGING_ROBOT_IP:-192.168.2.100}"
+    port: 30002
+    realtime_port: 30003
+    reverse_ip: "${STAGING_CONTROLLER_IP:-192.168.2.101}"
+    reverse_port: 50001
+    max_payload: 5.0  # kg (50% of production)
+    tool_center_point: [0.0, 0.0, 0.1]
+    
+  # Staging testing features
+  testing:
+    enable_simulation_mode: true
+    simulation_accuracy: 0.95  # 95% simulation accuracy
+    enable_trajectory_recording: true
+    recording_path: "/staging_data/trajectories/"
+    enable_collision_scenarios: true
+    scenario_path: "/staging_data/collision_scenarios/"
+
+# ============================================
+# CONTROL SYSTEM STAGING CONFIG
+# ============================================
+control:
+  # Staging hardware interface
+  hardware:
+    mode: "actual"
+    servo_controller: "dynamixel"
+    motor_driver: "simulated"  # Simulated motor for staging
+    gripper_type: "robotiq_2f85"
+    communication:
+      protocol: "modbus_tcp"
+      baud_rate: 115200
+      timeout: 10.0  # Longer timeout for staging
+      retry_attempts: 5
+      
+  # Staging servo control (Dynamixel)
+  servo:
+    controller: "dynamixel_xh540"
+    ids: [1, 2, 3, 4, 5, 6]
+    operating_mode: "position"
+    profile_velocity: 80  # RPM (80% of production)
+    profile_acceleration: 40  # RPM/s
+    homing_offset: [0, 0, 0, 0, 0, 0]
+    temperature_limit: 70  # °C (lower than prod)
+    voltage_limit: [11.5, 13.5]  # V (tighter range)
+    
+  # Staging motor control (simulated)
+  motor:
+    controller: "simulated"
+    max_speed: 0.8  # m/s
+    acceleration: 0.4  # m/s²
+    deceleration: 0.4  # m/s²
+    jerk_limit: 1.5  # m/s³
+    current_limit: 8.0  # A
+    temperature_limit: 65  # °C
+    
+  # Staging gripper control
+  gripper:
+    type: "robotiq_2f85"
+    max_opening: 0.085
+    min_opening: 0.0
+    grasp_force: [15.0, 45.0, 75.0]  # N (75% of production)
+    speed: [0.015, 0.075, 0.15]  # m/s (75% of production)
+    position_control: true
+    force_control: true
+    object_detection: true
+    
+  # Staging PID controllers
+  pid:
+    joint_position:
+      kp: [150.0, 150.0, 150.0, 75.0, 75.0, 75.0]  # 75% of production
+      ki: [0.4, 0.4, 0.4, 0.15, 0.15, 0.15]
+      kd: [15.0, 15.0, 15.0, 7.5, 7.5, 7.5]
+      integral_limit: 75.0
+      output_limit: 250.0  # Nm
+      
+  # Staging safety systems
+  safety:
+    emergency_stop_delay: 0.2  # seconds (slower than prod)
+    safe_torque_off: true
+    safe_stop_1: true
+    safe_stop_2: false  # Disabled in staging
+    safe_speed_monitoring: true
+    safe_position_monitoring: true
+    safety_rated_halt: false  # Disabled in staging
+    
+  # Staging testing features
+  testing:
+    enable_fault_injection: true
+    fault_scenarios:
+      - "communication_loss"
+      - "sensor_failure"
+      - "motor_stall"
+      - "over_temperature"
+    enable_performance_testing: true
+    performance_metrics_file: "/staging_data/control_performance.json"
+
+# ============================================
+# TASK PLANNING STAGING CONFIG
+# ============================================
+task_planning:
+  # Staging task sequences
+  sequences:
+    pick_and_place_staging:
+      - action: "initialize_system"
+      - action: "move_to_safe_position"
+      - action: "scan_environment"
+      - action: "identify_targets"
+      - action: "select_optimal_target"
+      - action: "calculate_grasp_pose"
+      - action: "plan_approach_trajectory"
+      - action: "execute_approach"
+      - action: "grasp_object"
+      - action: "verify_grasp"
+      - action: "plan_retreat_trajectory"
+      - action: "execute_retreat"
+      - action: "plan_transport_trajectory"
+      - action: "execute_transport"
+      - action: "plan_place_trajectory"
+      - action: "execute_place"
+      - action: "release_object"
+      - action: "verify_release"
+      - action: "return_to_safe_position"
+      - action: "log_success"
+      
+    test_sequence:
+      - action: "initialize_test"
+      - action: "run_perception_test"
+      - action: "run_motion_test"
+      - action: "run_grasping_test"
+      - action: "run_integration_test"
+      - action: "generate_test_report"
+      
+  # Staging object database (test objects)
+  objects:
+    test_cube:
+      type: "cuboid"
+      dimensions: [0.08, 0.08, 0.08]
+      weight: 0.3
+      material: "plastic"
+      grasp_type: "top_grasp"
+      required_force: 25.0
+      fragility: "low"
+      
+    test_cylinder:
+      type: "cylinder"
+      dimensions: [0.03, 0.15]
+      weight: 0.5
+      material: "plastic"
+      grasp_type: "side_grasp"
+      required_force: 35.0
+      fragility: "medium"
+      
+    test_sphere:
+      type: "sphere"
+      dimensions: [0.05]
+      weight: 0.2
+      material: "rubber"
+      grasp_type: "encompassing_grasp"
+      required_force: 20.0
+      fragility: "low"
+      
+    test_irregular:
+      type: "irregular"
+      bounding_box: [0.1, 0.06, 0.04]
+      weight: 0.4
+      material: "mixed"
+      grasp_type: "precision_grasp"
+      required_force: 15.0
+      fragility: "high"
+      
+  # Staging task parameters
+  parameters:
+    max_pick_attempts: 3  # More attempts than production
+    pick_timeout: 90.0  # Longer timeout
+    place_timeout: 90.0
+    verification_enabled: true
+    retry_on_failure: true
+    retry_delay: 3.0
+    success_threshold: 0.90  # 90% threshold for staging
+    force_monitoring: true
+    slip_detection: true
+    
+  # Staging testing features
+  testing:
+    enable_scenario_testing: true
+    scenarios:
+      - "single_object_pick"
+      - "multiple_objects"
+      - "cluttered_environment"
+      - "obstructed_path"
+      - "failed_grasp_recovery"
+    enable_performance_benchmark: true
+    benchmark_file: "/staging_data/task_performance.json"
+
+# ============================================
+# SAFETY SYSTEM STAGING CONFIG
+# ============================================
+safety:
+  # Staging emergency systems
+  emergency:
+    stop_enabled: true
+    stop_timeout: 0.1  # 100ms response time
+    auto_recovery: true  # Auto recovery enabled in staging
+    recovery_procedure: "automatic"
+    emergency_contact: "staging_team"
+    emergency_protocol: "staging_protocol"
+    
+  # Staging collision avoidance
+  collision:
+    enabled: true
+    safety_distance: 0.15  # meters
+    warning_distance: 0.25
+    stop_distance: 0.08
+    protective_field: true
+    speed_reduction_field: true
+    dynamic_obstacle_tracking: true
+    static_map_integration: true
+    
+  # Staging joint limits
+  joints:
+    soft_limits_enabled: true
+    soft_limit_threshold: 0.80  # More conservative
+    velocity_limit_threshold: 0.6
+    torque_limit_threshold: 0.5
+    acceleration_limit_threshold: 0.7
+    jerk_limit_threshold: 0.8
+    
+  # Staging safety monitoring
+  monitoring:
+    heartbeat_interval: 1.0  # seconds
+    timeout_threshold: 2.0
+    enable_telemetry: true
+    telemetry_rate: 50  # Hz
+    log_violations: true
+    violation_response: "warn_and_slow"  # Not immediate stop
+    
+  # Staging safety testing
+  testing:
+    enable_safety_tests: true
+    safety_tests:
+      - "emergency_stop_test"
+      - "collision_avoidance_test"
+      - "joint_limit_test"
+      - "torque_limit_test"
+    test_frequency: "daily"
+
+# ============================================
+# STAGING MONITORING & TELEMETRY
+# ============================================
+monitoring:
+  # Staging logging configuration
+  logging:
+    level: "INFO"
+    directory: "/var/log/robot/staging"
+    max_files: 50
+    max_file_size: "500MB"
+    rotation: "daily"
+    format: "json"
+    compression: true
+    retention_days: 180  # 6 months
+    encryption: false  # Disabled for easier analysis
+    
+  # Staging performance monitoring
+  performance:
+    enabled: true
+    metrics:
+      - "cpu_usage_percent"
+      - "memory_usage_percent"
+      - "gpu_utilization_percent"
+      - "gpu_memory_usage"
+      - "inference_latency_ms"
+      - "planning_time_ms"
+      - "cycle_time_ms"
+      - "success_rate_percent"
+      - "error_rate_percent"
+      
+    sampling_rate: 2.0  # Hz
+    retention_period: 259200  # 3 days
+    aggregation:
+      enabled: true
+      intervals: [60, 300, 1800]  # 1min, 5min, 30min
+      
+  # Staging health checks
+  health:
+    enabled: true
+    check_interval: 15.0  # seconds
+    components:
+      - "perception"
+      - "planning"
+      - "control"
+      - "safety"
+      - "communication"
+      - "database"
+      
+    failure_threshold: 5
+    recovery_attempts: 5
+    escalate_after: 600  # 10 minutes
+    
+  # Staging alerting system
+  alerts:
+    enabled: true
+    levels:
+      info:
+        channels: ["log", "dashboard"]
+      warning:
+        channels: ["log", "dashboard", "slack"]
+      error:
+        channels: ["log", "dashboard", "slack", "email"]
+      critical:
+        channels: ["log", "dashboard", "slack", "email", "sms"]
+        
+    channels:
+      email:
+        smtp_server: "smtp.staging.company.com"
+        from_address: "robot-staging@company.com"
+        to_addresses: ["staging-team@company.com", "qa@company.com"]
+        
+      slack:
+        webhook_url: "${SLACK_STAGING_WEBHOOK}"
+        channel: "#robot-staging-alerts"
+        
+      sms:
+        provider: "twilio"
+        account_sid: "${TWILIO_STAGING_SID}"
+        auth_token: "${TWILIO_STAGING_TOKEN}"
+        to_numbers: ["+15551234567"]  # Staging team lead
+        
+  # Staging dashboard
+  dashboard:
+    enabled: true
+    type: "grafana"
+    url: "https://monitoring.staging.company.com/grafana"
+    refresh_interval: 10  # seconds
+    panels:
+      - "system_health"
+      - "performance_metrics"
+      - "test_coverage"
+      - "error_analysis"
+      - "resource_utilization"
+      - "safety_violations"
+
+# ============================================
+# STAGING DATABASE CONFIGURATION
+# ============================================
+database:
+  # Main staging database
+  main:
+    type: "postgresql"
+    host: "${STAGING_DB_HOST:-db-staging.company.com}"
+    port: 5432
+    name: "robot_staging"
+    username: "${STAGING_DB_USERNAME}"
+    password: "${STAGING_DB_PASSWORD}"
+    pool_size: 20
+    timeout: 30
+    ssl_mode: "prefer"  # Optional SSL
+    ssl_cert: "/etc/ssl/certs/db-client-staging.crt"
+    ssl_key: "/etc/ssl/private/db-client-staging.key"
+    
+    # Connection pooling
+    connection_pool:
+      min_connections: 5
+      max_connections: 30
+      max_lifetime: 1800  # 30 minutes
+      idle_timeout: 300   # 5 minutes
+      
+  # Time series database for metrics
+  timeseries:
+    type: "timescaledb"
+    host: "${STAGING_TSDB_HOST:-tsdb-staging.company.com}"
+    port: 5432
+    database: "robot_metrics_staging"
+    username: "${STAGING_TSDB_USERNAME}"
+    password: "${STAGING_TSDB_PASSWORD}"
+    chunk_interval: "7 days"
+    retention_period: "30 days"
+    compression: true
+    compression_interval: "1 day"
+    
+  # Object storage for test data
+  storage:
+    type: "s3"
+    endpoint: "https://s3.staging.company.com"
+    access_key: "${STAGING_S3_ACCESS_KEY}"
+    secret_key: "${STAGING_S3_SECRET_KEY}"
+    bucket: "robot-data-staging"
+    region: "us-east-1"
+    encryption: false  # Disabled for staging
+    versioning: true
+    lifecycle_rules:
+      - prefix: "test_data/"
+        expiration_days: 90
+      - prefix: "performance_logs/"
+        expiration_days: 180
+        
+  # Redis for caching
+  cache:
+    type: "redis"
+    host: "${STAGING_REDIS_HOST:-redis-staging.company.com}"
+    port: 6379
+    password: "${STAGING_REDIS_PASSWORD}"
+    database: 0
+    max_connections: 20
+    ttl: 1800  # 30 minutes
+    cluster_mode: false
+
+# ============================================
+# STAGING NETWORK & SECURITY
+# ============================================
+network:
+  # Staging ROS2 network settings
+  ros:
+    multicast_enabled: true  # Enabled for staging
+    unicast_enabled: true
+    interface: "eth0"
+    port: 11312  # Different port than production
+    discovery_server: true
+    discovery_server_port: 11812
+    ip_address: "${STAGING_ROBOT_IP:-192.168.2.100}"
+    subnet_mask: "255.255.255.0"
+    gateway: "192.168.2.1"
+    
+  # Staging firewall rules (more permissive)
+  firewall:
+    enabled: true
+    rules:
+      - port: 11312
+        protocol: "tcp"
+        source: "192.168.2.0/24"
+        action: "allow"
+      - port: 11812
+        protocol: "tcp"
+        source: "192.168.2.0/24"
+        action: "allow"
+      - port: 30002
+        protocol: "tcp"
+        source: "192.168.2.0/24"  # Entire staging subnet
+        action: "allow"
+      - port: 22
+        protocol: "tcp"
+        source: "10.0.0.0/8"  # Corporate network
+        action: "allow"
+      - default_action: "deny"
+        
+  # Staging API gateway
+  api:
+    enabled: true
+    gateway: "nginx"
+    host: "robot-staging-api.company.com"
+    port: 8443  # Different port
+    ssl_enabled: true
+    ssl_cert: "/etc/ssl/certs/robot-staging-api.crt"
+    ssl_key: "/etc/ssl/private/robot-staging-api.key"
+    cors_enabled: true
+    cors_origins: ["https://staging.company.com", "http://localhost:3000"]
+    rate_limit: 500  # requests per minute
+    authentication: "basic"  # Simpler auth for staging
+    
+  # Staging VPN access
+  vpn:
+    enabled: true
+    type: "openvpn"
+    interface: "tun0"
+    port: 1194
+    config_file: "/etc/openvpn/staging.ovpn"
+    
+  # Staging network monitoring
+  monitoring:
+    enable_snmp: true
+    snmp_community: "public-staging"  # Less secure for staging
+    enable_netflow: false
+    bandwidth_monitoring: true
+    latency_monitoring: true
+
+# ============================================
+# STAGING TESTING CONFIGURATION
+# ============================================
+testing:
+  # Test suites
+  suites:
+    unit_tests:
+      enabled: true
+      path: "/tests/unit/"
+      coverage_threshold: 80
+      run_on_deploy: true
+      
+    integration_tests:
+      enabled: true
+      path: "/tests/integration/"
+      timeout: 300  # 5 minutes
+      run_on_deploy: true
+      
+    performance_tests:
+      enabled: true
+      path: "/tests/performance/"
+      baseline_file: "/staging_data/performance_baseline.json"
+      tolerance_percent: 10
+      run_schedule: "daily"
+      
+    safety_tests:
+      enabled: true
+      path: "/tests/safety/"
+      require_approval: true
+      run_schedule: "weekly"
+      
+    stress_tests:
+      enabled: true
+      path: "/tests/stress/"
+      duration: 3600  # 1 hour
+      run_schedule: "monthly"
+      
+  # Test data management
+  test_data:
+    storage_path: "/staging_data/tests/"
+    retention_days: 90
+    max_size_gb: 100
+    compression: true
+    
+    datasets:
+      - name: "object_detection"
+        path: "/staging_data/datasets/objects/"
+        count: 1000
+        annotations: true
+        
+      - name: "trajectory_data"
+        path: "/staging_data/datasets/trajectories/"
+        count: 500
+        
+      - name: "failure_scenarios"
+        path: "/staging_data/datasets/failures/"
+        count: 100
+        
+  # Test automation
+  automation:
+    ci_integration: true
+    ci_server: "jenkins-staging.company.com"
+    job_name: "robot-staging-tests"
+    trigger_on_commit: true
+    trigger_on_schedule: true
+    schedule: "0 2 * * *"  # Daily at 2 AM
+    
+  # Test reporting
+  reporting:
+    enabled: true
+    formats: ["html", "json", "junit"]
+    destination: "/staging_data/reports/"
+    archive: true
+    notify_on_failure: true
+    notify_channels: ["slack", "email"]
+    
+  # Load testing
+  load_testing:
+    enabled: true
+    scenarios:
+      - name: "normal_load"
+        objects_per_hour: 100
+        duration: 3600
+        
+      - name: "peak_load"
+        objects_per_hour: 500
+        duration: 900
+        
+      - name: "stress_load"
+        objects_per_hour: 1000
+        duration: 300
+        
+    metrics:
+      - "throughput"
+      - "latency"
+      - "error_rate"
+      - "resource_utilization"
+
+# ============================================
+# STAGING BACKUP & RESTORE
+# ============================================
+backup:
+  # Staging backup system
+  automated:
+    enabled: true
+    schedule: "0 3 * * *"  # Daily at 3 AM
+    retention_days: 14
+    full_backup_interval: 14  # Bi-weekly full backup
+    incremental_backup: true
+    
+  # Components to backup
+  components:
+    - name: "database"
+      type: "postgresql_dump"
+      compress: true
+      encryption: false  # Disabled for staging
+      
+    - name: "configuration"
+      type: "file_sync"
+      paths:
+        - "/etc/robot/staging/"
+        - "/ros2_ws/src/"
+        
+    - name: "test_data"
+      type: "archive"
+      paths:
+        - "/staging_data/"
+        
+    - name: "logs"
+      type: "archive"
+      paths:
+        - "/var/log/robot/staging/"
+        
+  # Storage destinations
+  storage:
+    primary:
+      type: "nfs"
+      server: "backup-staging.company.com"
+      path: "/backups/robot/staging"
+      quota_gb: 500
+      
+  # Restore testing
+  restore_testing:
+    enabled: true
+    schedule: "0 4 * * 0"  # Weekly on Sunday at 4 AM
+    verify_integrity: true
+    test_restore: true
+
+# ============================================
+# STAGING UPDATES & DEPLOYMENT
+# ============================================
+deployment:
+  # Deployment strategy
+  strategy: "rolling"
+  maintenance_window: "20:00-22:00"
+  max_unavailable: 1
+  max_surge: 1
+  health_check_timeout: 180
+  rollback_on_failure: true
+  rollback_timeout: 300
+  
+  # Staging deployment pipeline
+  pipeline:
+    stages:
+      - name: "build"
+        timeout: 600
+        
+      - name: "unit_tests"
+        timeout: 300
+        
+      - name: "integration_tests"
+        timeout: 1800
+        
+      - name: "deploy_to_staging"
+        timeout: 900
+        
+      - name: "staging_tests"
+        timeout: 3600
+        
+      - name: "approval"
+        manual: true
+        
+      - name: "deploy_to_production"
+        timeout: 1800
+        
+    artifacts:
+      - "docker_images"
+      - "test_reports"
+      - "performance_metrics"
+      - "deployment_logs"
+      
+  # Canary testing
+  canary:
+    enabled: true
+    percentage: 10
+    duration: 3600  # 1 hour
+    metrics_to_monitor:
+      - "error_rate"
+      - "latency_p95"
+      - "success_rate"
+    rollback_thresholds:
+      error_rate: 5  # 5% error rate triggers rollback
+      latency_increase: 50  # 50% latency increase
+
+# ============================================
+# STAGING PERFORMANCE BASELINING
+# ============================================
+performance_baseline:
+  # Baseline collection
+  collection:
+    enabled: true
+    duration: 86400  # 24 hours
+    metrics:
+      - "perception_inference_time"
+      - "motion_planning_time"
+      - "total_cycle_time"
+      - "cpu_utilization"
+      - "memory_usage"
+      - "gpu_utilization"
+      - "success_rate"
+      - "error_rate"
+      
+  # Baseline storage
+  storage:
+    path: "/staging_data/baselines/"
+    retention: 30  # Keep 30 baselines
+    format: "json"
+    
+  # Alerting on deviation
+  alerting:
+    enabled: true
+    deviation_threshold: 20  # 20% deviation triggers alert
+    alert_channels: ["slack"]
+    
+  # Auto-update of baseline
+  auto_update:
+    enabled: true
+    interval: 7  # Update weekly
+    require_approval: false
+
+# ============================================
+# STAGING FEATURE FLAGS
+# ============================================
+feature_flags:
+  # Experimental features for staging
+  experimental:
+    new_grasping_algorithm:
+      enabled: true
+      rollout_percentage: 50
+      
+    improved_tracking:
+      enabled: false
+      
+    predictive_maintenance:
+      enabled: true
+      data_collection_only: true
+      
+  # A/B testing features
+  ab_testing:
+    enabled: true
+    experiments:
+      - name: "grasp_force_optimization"
+        variant_a: "default_force"
+        variant_b: "adaptive_force"
+        metrics:
+          - "grasp_success_rate"
+          - "object_damage_rate"
+          
+      - name: "path_planning_algorithm"
+        variant_a: "rrt_connect"
+        variant_b: "rrt_star"
+        metrics:
+          - "planning_time"
+          - "path_length"
+          - "smoothness"
+          
+  # Feature toggles
+  toggles:
+    enable_debug_logging: true
+    enable_extra_telemetry: true
+    enable_mock_hardware: false
+    enable_performance_profiling: true
+    enable_extended_testing: true
+
+# ============================================
+# END OF STAGING CONFIGURATION
+# ============================================
+
+# ============================================
+# STAGING ENVIRONMENT VARIABLES
+# ============================================
+# Staging-specific environment variables:
+#
+# Required:
+# - STAGING_DB_HOST: Staging database host
+# - STAGING_DB_USERNAME: Staging database username
+# - STAGING_DB_PASSWORD: Staging database password
+# - STAGING_S3_ACCESS_KEY: Staging S3 access key
+# - STAGING_S3_SECRET_KEY: Staging S3 secret key
+# - STAGING_ROBOT_IP: Staging robot IP address
+# - STAGING_CONTROLLER_IP: Staging controller IP
+#
+# Optional:
+# - CAMERA_SERIAL: Camera serial number
+# - SLACK_STAGING_WEBHOOK: Slack webhook for staging alerts
+# - TWILIO_STAGING_SID: Twilio staging account SID
+# - TWILIO_STAGING_TOKEN: Twilio staging auth token
+# - STAGING_REDIS_PASSWORD: Redis staging password
+#
+# ============================================

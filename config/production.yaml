@@ -1,0 +1,1071 @@
+# ml-object-picking-robot/config/production.yaml
+# Production configuration for ML-Based Object Picking Robot
+# Optimized for stability, performance, and reliability in industrial environments
+
+# ============================================
+# SYSTEM-WIDE PRODUCTION CONFIGURATION
+# ============================================
+system:
+  name: "ml-object-picking-robot-prod"
+  version: "${APP_VERSION:-1.0.0}"
+  environment: "production"
+  debug_mode: false
+  log_level: "WARNING"
+  strict_mode: true
+  
+  # Production resource management
+  resource_limits:
+    cpu_percentage: 90
+    memory_mb: 8192
+    gpu_memory_mb: 4096
+    disk_space_gb: 50
+    network_bandwidth_mbps: 1000
+    
+  # Production features (security-focused)
+  features:
+    enable_hot_reload: false
+    enable_debug_endpoints: false
+    enable_profiling: false  # Only enable on-demand
+    require_hardware_validation: true
+    validate_configuration: true
+    enable_watchdog: true
+    
+  # Production timeouts (optimized for reliability)
+  timeouts:
+    startup: 60
+    shutdown: 30
+    service_call: 10
+    motion_planning: 30
+    detection: 5
+    network: 15
+    database: 30
+    
+  # Production scaling
+  scaling:
+    max_instances: 1
+    load_balancing: false
+    failover_enabled: true
+    health_check_interval: 10
+
+# ============================================
+# ROS2 PRODUCTION CONFIGURATION
+# ============================================
+ros2:
+  distribution: "humble"
+  domain_id: 0  # Standard production domain
+  
+  # Production QoS settings (reliability-focused)
+  qos:
+    sensor_data:
+      reliability: "reliable"
+      durability: "transient_local"
+      depth: 100
+      deadline:
+        seconds: 1
+        nanoseconds: 0
+      lifespan:
+        seconds: 10
+    commands:
+      reliability: "reliable"
+      durability: "volatile"
+      depth: 1000
+      deadline:
+        seconds: 5
+    status:
+      reliability: "best_effort"
+      durability: "volatile"
+      depth: 500
+      
+  # Production node configurations
+  nodes:
+    publish_rate: 60.0  # Hz for critical systems
+    executor_threads: 8
+    spin_timeout: 5000  # ms
+    realtime_priority: 80  # Linux realtime priority
+    cpu_affinity: [0, 1, 2, 3]  # Core affinity
+    
+  # Production topics
+  topics:
+    camera: "/camera/color/image_raw"
+    depth: "/camera/depth/image_rect_raw"
+    detections: "/perception/detections"
+    filtered_detections: "/perception/detections_filtered"
+    visualization: "/perception/visualization"
+    joint_states: "/joint_states"
+    trajectory: "/motion/trajectory"
+    executed_trajectory: "/motion/executed_trajectory"
+    robot_status: "/system/robot_status"
+    system_health: "/system/health"
+    emergency_stop: "/safety/emergency_stop"
+    
+  # Production services (with authentication)
+  services:
+    pick_object: "/task/pick_object"
+    place_object: "/task/place_object"
+    calibrate_camera: "/perception/calibrate_camera"
+    calibrate_robot: "/control/calibrate_robot"
+    system_diagnostics: "/system/diagnostics"
+    firmware_update: "/system/firmware_update"
+    
+  # Production actions (with progress tracking)
+  actions:
+    pick_place: "/task/pick_place"
+    calibrate_system: "/system/calibrate"
+    run_diagnostics: "/system/run_diagnostics"
+    execute_mission: "/mission/execute"
+    
+  # Security
+  security:
+    authentication: true
+    encryption: true
+    topic_whitelist: true
+    max_message_size: "10MB"
+    
+  # Monitoring
+  monitoring:
+    enable_statistics: true
+    statistics_window: 60  # seconds
+    enable_introspection: true
+    publish_node_stats: true
+
+# ============================================
+# PERCEPTION SYSTEM PRODUCTION CONFIG
+# ============================================
+perception:
+  # Production ML Model (optimized for accuracy)
+  model:
+    name: "yolov5x6"  # Extra large for maximum accuracy
+    path: "/ros2_ws/src/perception_stack/models/yolov5x6_custom_prod.pt"
+    input_size: 1280
+    confidence_threshold: 0.7  # Higher for fewer false positives
+    iou_threshold: 0.6
+    max_detections: 200
+    classes: 80  # COCO classes + custom
+    
+  # Production camera configuration
+  camera:
+    source: "realsense_d435"  # Intel RealSense D435
+    serial_number: "${CAMERA_SERIAL:-}"
+    resolution:
+      width: 1920
+      height: 1080
+    fps: 30
+    auto_exposure: true
+    auto_white_balance: true
+    calibration_file: "/etc/robot/camera_calibration_prod.yaml"
+    calibration_interval: 86400  # Recalibrate every 24 hours
+    
+  # Depth camera configuration
+  depth:
+    enabled: true
+    resolution:
+      width: 1280
+      height: 720
+    fps: 30
+    depth_units: 0.001  # meters
+    depth_scale: 1000.0
+    align_to_color: true
+    
+  # Production object detection
+  detection:
+    enabled_classes: "all"  # Detect all 80 COCO classes
+    min_detection_size: 10  # pixels
+    max_detection_size: 1000  # pixels
+    tracking_enabled: true
+    tracker_type: "deep_sort"  # Advanced tracking
+    track_confirmation_frames: 3
+    track_deletion_frames: 30
+    class_filter:  # Production-specific filtering
+      required: [39, 40, 41, 56, 67, 73]  # Bottle, wine glass, cup, chair, cell phone, book
+      prohibited: [0, 1, 2, 3]  # Person, bicycle, car, motorcycle
+    
+  # Production optimization
+  optimization:
+    use_gpu: true
+    gpu_id: 0
+    half_precision: true
+    tensorrt_optimization: true
+    tensorrt_engine_path: "/opt/tensorrt_engines/yolov5x6_fp16.engine"
+    batch_size: 4
+    enable_caching: true
+    cache_size: 1000
+    cache_ttl: 3600  # seconds
+    
+  # Production safety features
+  safety:
+    validate_detections: true
+    spatial_consistency: true
+    temporal_consistency: true
+    confidence_smoothing: true
+    outlier_rejection: true
+    max_frame_skip: 5
+    
+  # Production monitoring
+  monitoring:
+    enable_metrics: true
+    publish_metrics: true
+    metrics_topic: "/perception/metrics"
+    enable_health_check: true
+    health_check_interval: 10
+    failure_threshold: 5
+
+# ============================================
+# MOTION PLANNING PRODUCTION CONFIG
+# ============================================
+motion_planning:
+  # Production robot parameters (real hardware)
+  robot:
+    model: "ur10e"  # Universal Robots UR10e
+    dof: 6
+    joint_names: ["shoulder_pan_joint", "shoulder_lift_joint", "elbow_joint", 
+                  "wrist_1_joint", "wrist_2_joint", "wrist_3_joint"]
+    home_position: [0.0, -1.57, 1.57, 0.0, 0.0, 0.0]  # radians
+    velocity_limits: [2.0, 2.0, 2.0, 2.0, 2.0, 2.0]  # rad/s (UR10e limits)
+    acceleration_limits: [5.0, 5.0, 5.0, 5.0, 5.0, 5.0]  # rad/s²
+    torque_limits: [330.0, 330.0, 150.0, 56.0, 56.0, 56.0]  # Nm
+    
+  # Production IK Solver configuration
+  ik_solver:
+    type: "trac_ik"  # Faster and more reliable for production
+    method: "speed"
+    max_iterations: 500
+    tolerance: 0.0001
+    timeout: 0.5  # seconds
+    epsilon: 1e-5
+    
+  # Production motion planner (industrial-grade)
+  planner:
+    type: "ompl"
+    algorithm: "RRTstar"  # Optimal planning
+    planning_time: 10.0  # seconds
+    goal_tolerance: 0.005  # 5mm tolerance
+    collision_checking: true
+    simplify_path: true
+    simplify_time: 1.0
+    interpolate_path: true
+    interpolation_step: 0.01  # meters
+    
+  # Production trajectory generation
+  trajectory:
+    time_scaling: "s_curve"
+    max_velocity_scale: 0.8  # 80% of max for safety margin
+    max_acceleration_scale: 0.7
+    max_jerk: 100.0  # rad/s³
+    discretization: 0.002  # 2ms for smooth motion
+    blending_radius: 0.02  # 2cm blending radius
+    
+  # Production collision checking
+  collision:
+    enabled: true
+    checker: "fcl"  # Flexible Collision Library
+    padding: 0.05  # 5cm safety margin
+    continuous_collision_checking: true
+    self_collision_checking: true
+    environment_collision_checking: true
+    collision_map_topic: "/environment/collision_map"
+    
+  # Production robot interface
+  robot_interface:
+    type: "ur_modern_driver"
+    ip_address: "${ROBOT_IP:-192.168.1.100}"
+    port: 30002
+    realtime_port: 30003
+    reverse_ip: "${CONTROLLER_IP:-192.168.1.101}"
+    reverse_port: 50001
+    max_payload: 10.0  # kg
+    tool_center_point: [0.0, 0.0, 0.1]  # meters
+
+# ============================================
+# CONTROL SYSTEM PRODUCTION CONFIG
+# ============================================
+control:
+  # Production hardware interface
+  hardware:
+    mode: "actual"
+    servo_controller: "dynamixel"
+    motor_driver: "copley"
+    gripper_type: "robotiq_2f85"
+    communication:
+      protocol: "modbus_tcp"
+      baud_rate: 115200
+      timeout: 5.0
+      retry_attempts: 3
+      
+  # Production servo control (Dynamixel)
+  servo:
+    controller: "dynamixel_xh540"
+    ids: [1, 2, 3, 4, 5, 6]
+    operating_mode: "position"
+    profile_velocity: 100  # RPM
+    profile_acceleration: 50  # RPM/s
+    homing_offset: [0, 0, 0, 0, 0, 0]
+    temperature_limit: 80  # °C
+    voltage_limit: [11.0, 14.0]  # V
+    
+  # Production motor control
+  motor:
+    controller: "copley_accelnet"
+    max_speed: 1.0  # m/s
+    acceleration: 0.5  # m/s²
+    deceleration: 0.5  # m/s²
+    jerk_limit: 2.0  # m/s³
+    current_limit: 10.0  # A
+    temperature_limit: 70  # °C
+    
+  # Production gripper control (Robotiq 2F-85)
+  gripper:
+    type: "robotiq_2f85"
+    max_opening: 0.085  # meters
+    min_opening: 0.0
+    grasp_force: [20.0, 60.0, 100.0]  # N (3 levels)
+    speed: [0.02, 0.1, 0.2]  # m/s (3 levels)
+    position_control: true
+    force_control: true
+    object_detection: true
+    
+  # Production PID controllers (tuned for hardware)
+  pid:
+    joint_position:
+      kp: [200.0, 200.0, 200.0, 100.0, 100.0, 100.0]
+      ki: [0.5, 0.5, 0.5, 0.2, 0.2, 0.2]
+      kd: [20.0, 20.0, 20.0, 10.0, 10.0, 10.0]
+      integral_limit: 100.0
+      output_limit: 330.0  # Nm
+    joint_velocity:
+      kp: [10.0, 10.0, 10.0, 5.0, 5.0, 5.0]
+      ki: [0.1, 0.1, 0.1, 0.05, 0.05, 0.05]
+      kd: [1.0, 1.0, 1.0, 0.5, 0.5, 0.5]
+      
+  # Production safety systems
+  safety:
+    emergency_stop_delay: 0.1  # seconds
+    safe_torque_off: true
+    safe_stop_1: true
+    safe_stop_2: true
+    safe_speed_monitoring: true
+    safe_position_monitoring: true
+    safety_rated_halt: true
+    
+  # Production monitoring
+  monitoring:
+    enable_telemetry: true
+    telemetry_rate: 100  # Hz
+    publish_diagnostics: true
+    diagnostics_rate: 10  # Hz
+    fault_detection: true
+    predictive_maintenance: true
+
+# ============================================
+# TASK PLANNING PRODUCTION CONFIG
+# ============================================
+task_planning:
+  # Production task sequences
+  sequences:
+    pick_and_place_production:
+      - action: "initialize_system"
+      - action: "move_to_safe_position"
+      - action: "scan_environment"
+      - action: "identify_targets"
+      - action: "select_optimal_target"
+      - action: "calculate_grasp_pose"
+      - action: "plan_approach_trajectory"
+      - action: "execute_approach"
+      - action: "grasp_object"
+      - action: "verify_grasp"
+      - action: "plan_retreat_trajectory"
+      - action: "execute_retreat"
+      - action: "plan_transport_trajectory"
+      - action: "execute_transport"
+      - action: "plan_place_trajectory"
+      - action: "execute_place"
+      - action: "release_object"
+      - action: "verify_release"
+      - action: "return_to_safe_position"
+      - action: "log_success"
+      
+    calibration_sequence:
+      - action: "enter_calibration_mode"
+      - action: "calibrate_camera"
+      - action: "calibrate_gripper"
+      - action: "calibrate_force_sensors"
+      - action: "verify_calibration"
+      - action: "exit_calibration_mode"
+      
+  # Production object database
+  objects:
+    # Common industrial objects with precise parameters
+    small_box:
+      type: "cuboid"
+      dimensions: [0.1, 0.1, 0.1]  # meters
+      weight: 0.5  # kg
+      material: "cardboard"
+      grasp_type: "top_grasp"
+      required_force: 30.0  # N
+      fragility: "medium"
+      
+    medium_box:
+      type: "cuboid"
+      dimensions: [0.2, 0.2, 0.2]
+      weight: 2.0
+      material: "plastic"
+      grasp_type: "side_grasp"
+      required_force: 50.0
+      fragility: "low"
+      
+    bottle:
+      type: "cylinder"
+      dimensions: [0.04, 0.25]  # radius, height
+      weight: 1.0
+      material: "glass"
+      grasp_type: "encompassing_grasp"
+      required_force: 40.0
+      fragility: "high"
+      
+    electronic_component:
+      type: "irregular"
+      bounding_box: [0.05, 0.03, 0.02]
+      weight: 0.1
+      material: "plastic_metal"
+      grasp_type: "precision_grasp"
+      required_force: 10.0
+      fragility: "very_high"
+      
+  # Production task parameters
+  parameters:
+    max_pick_attempts: 2
+    pick_timeout: 60.0  # seconds
+    place_timeout: 60.0
+    verification_enabled: true
+    retry_on_failure: true
+    retry_delay: 5.0
+    success_threshold: 0.95
+    force_monitoring: true
+    slip_detection: true
+    
+  # Production optimization
+  optimization:
+    path_optimization: true
+    energy_optimization: true
+    time_optimization: true
+    collision_avoidance: true
+    redundancy_resolution: true
+    
+  # Production quality control
+  quality:
+    enable_quality_check: true
+    position_tolerance: 0.005  # 5mm
+    orientation_tolerance: 1.0  # degrees
+    force_tolerance: 5.0  # N
+    vision_verification: true
+    force_verification: true
+
+# ============================================
+# SAFETY SYSTEM PRODUCTION CONFIG
+# ============================================
+safety:
+  # Production emergency systems
+  emergency:
+    stop_enabled: true
+    stop_timeout: 0.05  # 50ms response time
+    auto_recovery: false  # Manual recovery required
+    recovery_procedure: "manual"
+    emergency_contact: "safety_officer"
+    emergency_protocol: "iso_10218"
+    
+  # Production collision avoidance
+  collision:
+    enabled: true
+    safety_distance: 0.2  # meters
+    warning_distance: 0.3
+    stop_distance: 0.1
+    protective_field: true
+    speed_reduction_field: true
+    dynamic_obstacle_tracking: true
+    static_map_integration: true
+    
+  # Production joint limits
+  joints:
+    soft_limits_enabled: true
+    soft_limit_threshold: 0.85  # Conservative margin
+    velocity_limit_threshold: 0.7
+    torque_limit_threshold: 0.6
+    acceleration_limit_threshold: 0.8
+    jerk_limit_threshold: 0.9
+    
+  # Production safety monitoring
+  monitoring:
+    heartbeat_interval: 0.5  # seconds
+    timeout_threshold: 1.0
+    enable_telemetry: true
+    telemetry_rate: 100  # Hz
+    log_violations: true
+    violation_response: "immediate_stop"
+    
+  # Production safety standards compliance
+  compliance:
+    iso_10218: true  # Robots and robotic devices
+    iso_13849: true  # Safety-related parts of control systems
+    iso_12100: true  # Safety of machinery
+    ansi_r15_06: true  # Industrial robots and robot systems
+    ce_marking: true
+    
+  # Production safety zones
+  zones:
+    operating_zone:
+      type: "cuboid"
+      bounds: [[-1.0, -1.0, 0.0], [1.0, 1.0, 2.0]]
+      access_level: "operator"
+      
+    restricted_zone:
+      type: "cylinder"
+      center: [0.0, 0.0, 0.0]
+      radius: 0.5
+      height: 2.0
+      access_level: "maintenance"
+      
+    emergency_zone:
+      type: "sphere"
+      center: [0.0, 0.0, 1.0]
+      radius: 0.3
+      access_level: "none"
+
+# ============================================
+# PRODUCTION MONITORING & TELEMETRY
+# ============================================
+monitoring:
+  # Production logging configuration
+  logging:
+    level: "WARNING"
+    directory: "/var/log/robot/production"
+    max_files: 100
+    max_file_size: "1GB"
+    rotation: "daily"
+    format: "json"
+    compression: "gzip"
+    retention_days: 365
+    encryption: true
+    encryption_key: "${LOG_ENCRYPTION_KEY}"
+    
+  # Production performance monitoring
+  performance:
+    enabled: true
+    metrics:
+      - "cpu_usage_percent"
+      - "memory_usage_percent"
+      - "gpu_utilization_percent"
+      - "gpu_memory_usage"
+      - "disk_io_bytes"
+      - "network_io_bytes"
+      - "inference_latency_ms"
+      - "planning_time_ms"
+      - "cycle_time_ms"
+      - "success_rate_percent"
+      - "throughput_objects_per_hour"
+      
+    sampling_rate: 1.0  # Hz
+    retention_period: 604800  # 7 days in seconds
+    aggregation:
+      enabled: true
+      intervals: [60, 300, 3600]  # 1min, 5min, 1hour
+      
+  # Production health checks
+  health:
+    enabled: true
+    check_interval: 10.0  # seconds
+    components:
+      - "perception"
+      - "planning"
+      - "control"
+      - "safety"
+      - "communication"
+      - "database"
+      - "network"
+      
+    failure_threshold: 3
+    recovery_attempts: 3
+    escalate_after: 300  # 5 minutes
+    
+  # Production alerting system
+  alerts:
+    enabled: true
+    levels:
+      info:
+        channels: ["log", "dashboard"]
+      warning:
+        channels: ["log", "dashboard", "email"]
+      error:
+        channels: ["log", "dashboard", "email", "sms"]
+      critical:
+        channels: ["log", "dashboard", "email", "sms", "pager"]
+        
+    channels:
+      email:
+        smtp_server: "smtp.company.com"
+        from_address: "robot-monitor@company.com"
+        to_addresses: ["operations@company.com", "engineering@company.com"]
+        
+      sms:
+        provider: "twilio"
+        account_sid: "${TWILIO_ACCOUNT_SID}"
+        auth_token: "${TWILIO_AUTH_TOKEN}"
+        from_number: "+1234567890"
+        to_numbers: ["+1987654321"]
+        
+      pager:
+        provider: "pagerduty"
+        integration_key: "${PAGERDUTY_INTEGRATION_KEY}"
+        
+  # Production dashboard
+  dashboard:
+    enabled: true
+    type: "grafana"
+    url: "https://monitoring.company.com/grafana"
+    refresh_interval: 5  # seconds
+    panels:
+      - "system_health"
+      - "performance_metrics"
+      - "production_throughput"
+      - "error_rates"
+      - "resource_utilization"
+
+# ============================================
+# PRODUCTION DATABASE CONFIGURATION
+# ============================================
+database:
+  # Main production database
+  main:
+    type: "postgresql"
+    host: "${DB_HOST:-db-prod.company.com}"
+    port: 5432
+    name: "robot_production"
+    username: "${DB_USERNAME}"
+    password: "${DB_PASSWORD}"
+    pool_size: 50
+    timeout: 60
+    ssl_mode: "require"
+    ssl_cert: "/etc/ssl/certs/db-client.crt"
+    ssl_key: "/etc/ssl/private/db-client.key"
+    ssl_root_cert: "/etc/ssl/certs/ca-certificates.crt"
+    
+    # Connection pooling
+    connection_pool:
+      min_connections: 10
+      max_connections: 100
+      max_lifetime: 3600  # seconds
+      idle_timeout: 300   # seconds
+      
+  # Time series database for metrics
+  timeseries:
+    type: "timescaledb"  # PostgreSQL extension for time-series
+    host: "${TSDB_HOST:-tsdb-prod.company.com}"
+    port: 5432
+    database: "robot_metrics"
+    username: "${TSDB_USERNAME}"
+    password: "${TSDB_PASSWORD}"
+    chunk_interval: "1 day"
+    retention_period: "90 days"
+    compression: true
+    compression_interval: "7 days"
+    
+  # Object storage for large data
+  storage:
+    type: "s3"
+    endpoint: "https://s3.company.com"
+    access_key: "${S3_ACCESS_KEY}"
+    secret_key: "${S3_SECRET_KEY}"
+    bucket: "robot-data-prod"
+    region: "us-east-1"
+    encryption: "aws:kms"
+    kms_key_id: "${S3_KMS_KEY_ID}"
+    versioning: true
+    lifecycle_rules:
+      - prefix: "raw_images/"
+        expiration_days: 30
+      - prefix: "processed_data/"
+        expiration_days: 365
+        
+  # Redis for caching
+  cache:
+    type: "redis"
+    host: "${REDIS_HOST:-redis-prod.company.com}"
+    port: 6379
+    password: "${REDIS_PASSWORD}"
+    database: 0
+    max_connections: 100
+    ttl: 3600  # seconds
+    cluster_mode: true
+
+# ============================================
+# PRODUCTION NETWORK & SECURITY
+# ============================================
+network:
+  # Production ROS2 network settings
+  ros:
+    multicast_enabled: false  # Disable for security
+    unicast_enabled: true
+    interface: "eth0"
+    port: 11311
+    discovery_server: true
+    discovery_server_port: 11811
+    ip_address: "${ROBOT_IP:-192.168.1.100}"
+    subnet_mask: "255.255.255.0"
+    gateway: "192.168.1.1"
+    dns_servers: ["8.8.8.8", "8.8.4.4"]
+    
+  # Production firewall rules
+  firewall:
+    enabled: true
+    rules:
+      - port: 11311
+        protocol: "tcp"
+        source: "192.168.1.0/24"
+        action: "allow"
+      - port: 11811
+        protocol: "tcp"
+        source: "192.168.1.0/24"
+        action: "allow"
+      - port: 30002
+        protocol: "tcp"
+        source: "192.168.1.101"
+        action: "allow"
+      - port: 30003
+        protocol: "tcp"
+        source: "192.168.1.101"
+        action: "allow"
+      - default_action: "deny"
+        
+  # Production API gateway
+  api:
+    enabled: true
+    gateway: "nginx"
+    host: "robot-api.company.com"
+    port: 443
+    ssl_enabled: true
+    ssl_cert: "/etc/ssl/certs/robot-api.crt"
+    ssl_key: "/etc/ssl/private/robot-api.key"
+    cors_enabled: true
+    cors_origins: ["https://dashboard.company.com"]
+    rate_limit: 1000  # requests per minute
+    authentication: "jwt"
+    jwt_secret: "${JWT_SECRET}"
+    
+  # Production VPN access
+  vpn:
+    enabled: true
+    type: "wireguard"
+    interface: "wg0"
+    port: 51820
+    peers:
+      - name: "control_room"
+        public_key: "${CONTROL_ROOM_PUBLIC_KEY}"
+        allowed_ips: "10.0.0.2/32"
+      - name: "engineering"
+        public_key: "${ENGINEERING_PUBLIC_KEY}"
+        allowed_ips: "10.0.0.3/32"
+        
+  # Production network monitoring
+  monitoring:
+    enable_snmp: true
+    snmp_community: "${SNMP_COMMUNITY}"
+    enable_netflow: true
+    netflow_collector: "10.0.0.100:2055"
+    bandwidth_monitoring: true
+    latency_monitoring: true
+
+# ============================================
+# PRODUCTION BACKUP & DISASTER RECOVERY
+# ============================================
+backup:
+  # Automated backup system
+  automated:
+    enabled: true
+    schedule: "0 1 * * *"  # Daily at 1 AM
+    retention_days: 30
+    full_backup_interval: 7  # days
+    incremental_backup: true
+    
+  # Components to backup
+  components:
+    - name: "database"
+      type: "postgresql_dump"
+      compress: true
+      encryption: true
+      
+    - name: "configuration"
+      type: "file_sync"
+      paths:
+        - "/etc/robot/"
+        - "/ros2_ws/src/"
+        
+    - name: "models"
+      type: "file_sync"
+      paths:
+        - "/ros2_ws/src/perception_stack/models/"
+        - "/ml_training/models/"
+        
+    - name: "logs"
+      type: "archive"
+      paths:
+        - "/var/log/robot/"
+        
+    - name: "production_data"
+      type: "s3_sync"
+      bucket: "robot-backups-prod"
+      
+  # Storage destinations
+  storage:
+    primary:
+      type: "nfs"
+      server: "backup-server.company.com"
+      path: "/backups/robot/production"
+      quota_gb: 1000
+      
+    secondary:
+      type: "s3"
+      bucket: "robot-backups-dr"
+      region: "us-west-2"
+      
+  # Disaster recovery
+  disaster_recovery:
+    enabled: true
+    rpo: 3600  # Recovery Point Objective: 1 hour
+    rto: 14400  # Recovery Time Objective: 4 hours
+    dr_site: "dr-site.company.com"
+    failover_automation: true
+    failover_test_interval: 86400  # Test every 24 hours
+    
+  # Verification
+  verification:
+    enabled: true
+    verify_after_backup: true
+    test_restore_interval: 604800  # Test restore every 7 days
+    checksum_verification: true
+
+# ============================================
+# PRODUCTION UPDATES & MAINTENANCE
+# ============================================
+updates:
+  # Update strategy
+  strategy: "blue_green"
+  maintenance_window: "sunday 02:00-04:00"
+  max_unavailable: 0
+  max_surge: 1
+  health_check_timeout: 300
+  rollback_on_failure: true
+  rollback_timeout: 600
+  
+  # Software updates
+  software:
+    auto_check: true
+    check_interval: 86400  # Daily
+    auto_update: false  # Manual approval required
+    update_channels:
+      - name: "stable"
+        priority: 1
+      - name: "security"
+        priority: 0
+      - name: "beta"
+        priority: 99
+        
+  # Firmware updates
+  firmware:
+    auto_check: true
+    check_interval: 604800  # Weekly
+    auto_update: false
+    validation_required: true
+    backup_before_update: true
+    fallback_mechanism: true
+    
+  # Configuration updates
+  configuration:
+    hot_reload: false
+    validation_before_apply: true
+    backup_before_change: true
+    audit_trail: true
+    
+  # Maintenance procedures
+  maintenance:
+    daily_checks:
+      enabled: true
+      time: "06:00"
+      checks:
+        - "disk_space"
+        - "log_rotation"
+        - "database_connections"
+        - "network_connectivity"
+        
+    weekly_maintenance:
+      enabled: true
+      day: "saturday"
+      time: "03:00"
+      tasks:
+        - "database_vacuum"
+        - "log_cleanup"
+        - "cache_clear"
+        - "system_update"
+        
+    monthly_maintenance:
+      enabled: true
+      day: "first_sunday"
+      time: "02:00"
+      tasks:
+        - "full_system_backup"
+        - "security_patch_application"
+        - "performance_review"
+        - "hardware_inspection"
+
+# ============================================
+# PRODUCTION COMPLIANCE & AUDITING
+# ============================================
+compliance:
+  # Regulatory compliance
+  regulations:
+    gdpr:
+      enabled: true
+      data_retention_days: 30
+      right_to_be_forgotten: true
+      data_encryption: true
+      
+    hipaa:
+      enabled: false  # Only if handling medical data
+      data_encryption: true
+      access_logging: true
+      audit_trails: true
+      
+    iso_27001:
+      enabled: true
+      security_controls: true
+      risk_assessment: true
+      continuous_improvement: true
+      
+  # Audit logging
+  audit:
+    enabled: true
+    events:
+      - "user_authentication"
+      - "configuration_changes"
+      - "system_startup"
+      - "system_shutdown"
+      - "emergency_stop"
+      - "firmware_update"
+      - "data_access"
+      - "administrative_actions"
+      
+    format: "json"
+    location: "/var/log/robot/audit"
+    retention_days: 3650  # 10 years
+    encryption: true
+    integrity_check: true
+    
+  # Access control
+  access_control:
+    rbac_enabled: true
+    roles:
+      - name: "operator"
+        permissions: ["start", "stop", "monitor"]
+      - name: "maintenance"
+        permissions: ["calibrate", "diagnose", "update_config"]
+      - name: "administrator"
+        permissions: ["all"]
+      - name: "auditor"
+        permissions: ["read_logs", "read_audit"]
+        
+    authentication:
+      type: "ldap"
+      server: "ldap.company.com"
+      base_dn: "dc=company,dc=com"
+      timeout: 30
+      
+  # Data protection
+  data_protection:
+    encryption:
+      at_rest: true
+      in_transit: true
+      algorithm: "aes-256-gcm"
+      
+    data_classification:
+      public: ["system_status", "performance_metrics"]
+      internal: ["configuration", "logs"]
+      confidential: ["camera_feed", "object_data"]
+      restricted: ["user_credentials", "encryption_keys"]
+      
+    data_retention:
+      logs: 365  # days
+      metrics: 90
+      images: 30
+      configuration_history: 3650  # 10 years
+
+# ============================================
+# PRODUCTION SCALING & HIGH AVAILABILITY
+# ============================================
+scaling:
+  # High availability configuration
+  high_availability:
+    enabled: true
+    mode: "active_passive"
+    failover_time: 60  # seconds
+    heartbeat_interval: 5
+    quorum: 2
+    
+  # Load balancing
+  load_balancing:
+    enabled: false  # Single robot doesn't need load balancing
+    algorithm: "round_robin"
+    health_check_path: "/health"
+    health_check_interval: 10
+    
+  # Auto-scaling
+  auto_scaling:
+    enabled: false  # For multi-robot fleets
+    min_instances: 1
+    max_instances: 10
+    scale_up_threshold: 80  # CPU percentage
+    scale_down_threshold: 20
+    cooldown_period: 300  # seconds
+    
+  # Resource management
+  resource_management:
+    cpu_reservation: 2.0  # Cores
+    memory_reservation: "4Gi"
+    gpu_reservation: 1
+    storage_reservation: "50Gi"
+    
+  # Performance optimization
+  optimization:
+    cpu_affinity: true
+    memory_numa: true
+    gpu_exclusive: true
+    network_qos: true
+    disk_io_priority: "high"
+
+# ============================================
+# END OF PRODUCTION CONFIGURATION
+# ============================================
+
+# ============================================
+# PRODUCTION ENVIRONMENT VARIABLES
+# ============================================
+# These should be set in the production environment:
+#
+# Required:
+# - ROBOT_ID: Unique identifier for the robot
+# - DB_HOST: Production database host
+# - DB_USERNAME: Database username
+# - DB_PASSWORD: Database password
+# - S3_ACCESS_KEY: S3 access key
+# - S3_SECRET_KEY: S3 secret key
+# - JWT_SECRET: JWT authentication secret
+# - LOG_ENCRYPTION_KEY: Log encryption key
+#
+# Optional:
+# - CAMERA_SERIAL: Camera serial number
+# - ROBOT_IP: Robot IP address
+# - CONTROLLER_IP: Controller IP address
+# - TWILIO_ACCOUNT_SID: Twilio account SID
+# - TWILIO_AUTH_TOKEN: Twilio auth token
+# - PAGERDUTY_INTEGRATION_KEY: PagerDuty integration key
+# - SNMP_COMMUNITY: SNMP community string
+# - CONTROL_ROOM_PUBLIC_KEY: WireGuard control room public key
+# - ENGINEERING_PUBLIC_KEY: WireGuard engineering public key
+#
+# ============================================
