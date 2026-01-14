@@ -33,7 +33,7 @@
 #include "std_msgs/msg/bool.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 #include "robot_interfaces/msg/gripper_state.hpp"
-#include "robot_interfaces/srv/grasp_object.srv"
+#include "robot_interfaces/srv/grasp_object.hpp"
 
 namespace robot_control {
 

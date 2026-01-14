@@ -1,8 +1,6 @@
 from setuptools import setup, find_packages
-import os
-from glob import glob
 
-package_name = 'perception_stack'
+package_name = 'robot_control'
 
 setup(
     name=package_name,
@@ -17,7 +15,7 @@ setup(
     zip_safe=True,
     maintainer='Victor',
     maintainer_email='victor@production-team.com',
-    description='ML-based perception for object picking robot',
+    description='robot_control package',
     license='MIT',
     tests_require=['pytest'],
     entry_points={

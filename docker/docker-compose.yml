@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  ros2_workspace:
+    image: osrf/ros:humble-desktop
+    container_name: ml-robot-workspace
+    volumes:
+      - ../:/workspace
+      - /dev:/dev
+    privileged: true
+    network_mode: host
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+    working_dir: /workspace
+    command: tail -f /dev/null
+    stdin_open: true
+    tty: true

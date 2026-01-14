@@ -1,0 +1,16 @@
+# Request
+geometry_msgs/Pose target_pose
+float64 force
+float64 object_mass
+float64 friction_coefficient
+string material_type
+bool is_fragile
+float64 object_width
+bool is_slippery
+uint8 strategy
+---
+# Response
+bool success
+string message
+float64 actual_force
+bool is_holding
