@@ -9,8 +9,11 @@
       </ros>
       <update_rate>1.0</update_rate>
     </plugin>
+
+
+    <!-- COMMENT OUT OR DELETE THIS LINE -->
+    <!-- <plugin name="gazebo_ros_factory" filename="libgazebo_ros_factory.so"/> -->  
     
-    <plugin name="gazebo_ros_factory" filename="libgazebo_ros_factory.so"/>
     
     <!-- Physics settings -->
     <physics type="ode">
